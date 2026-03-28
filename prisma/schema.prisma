@@ -1,0 +1,567 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AuthProvider {
+  GOOGLE
+}
+
+enum TripStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ENDED_EARLY
+  ARCHIVED
+  CANCELLED
+}
+
+enum TripVisibility {
+  PRIVATE
+  SHARED
+  PUBLIC_TEMPLATE
+}
+
+enum TripMemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  REVOKED
+  CANCELLED
+}
+
+enum NotificationType {
+  TRIP_INVITATION_RECEIVED
+  TRIP_INVITATION_ACCEPTED
+  TRIP_INVITATION_DECLINED
+  TRIP_MEMBER_JOINED
+  TRIP_MEMBER_REMOVED
+  TRIP_UPDATED
+  ITINERARY_REMINDER
+  TRIP_STARTED
+  TRIP_ENDED
+  TEMPLATE_PUBLISHED
+  ACHIEVEMENT_UNLOCKED
+  SYSTEM
+}
+
+enum NotificationChannel {
+  IN_APP
+  WEB_PUSH
+}
+
+enum NotificationDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum ReminderType {
+  TRIP_START
+  TRIP_END
+  ITINERARY_START
+  ITINERARY_CUSTOM
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum RatingTargetType {
+  TRIP
+  TEMPLATE
+}
+
+enum AchievementCategory {
+  TRIP_COUNT
+  COUNTRY_COUNT
+  TEMPLATE_PUBLISH_COUNT
+  TEMPLATE_USE_COUNT
+  COMPLETED_TRIP_COUNT
+  MEMBER_TRIP_COUNT
+  SOCIAL
+  SPECIAL
+}
+
+enum AchievementConditionType {
+  TOTAL_TRIPS_CREATED
+  TOTAL_TRIPS_COMPLETED
+  TOTAL_COUNTRIES_VISITED
+  TOTAL_TEMPLATES_PUBLISHED
+  TOTAL_TEMPLATE_USES
+  TOTAL_PUBLIC_TRIPS_SHARED
+  TOTAL_JOINED_TRIPS
+}
+
+model User {
+  id              String       @id @default(cuid())
+  supabaseAuthId  String       @unique
+  provider        AuthProvider @default(GOOGLE)
+  providerSubject String?      @unique
+  email           String       @unique
+  fullName        String
+  avatarUrl       String?
+  username        String?      @unique
+  bio             String?
+  country         String?
+  isProfilePublic Boolean      @default(true)
+  lastSeenAt      DateTime?
+
+  ownedTrips             Trip[]                    @relation("TripOwner")
+  tripMembers            TripMember[]
+  invitationsReceived    TripInvitation[]          @relation("InvitationInvitee")
+  invitationsSent        TripInvitation[]          @relation("InvitationInviter")
+  pushSubscriptions      PushSubscription[]
+  notifications          Notification[]
+  notificationDeliveries NotificationDelivery[]
+  reminders              ScheduledReminder[]
+  ratings                Rating[]
+  publishedTemplates     PublicTemplate[]          @relation("TemplatePublisher")
+  achievementProgresses  UserAchievementProgress[]
+  unlockedAchievements   UserAchievement[]
+  tripCountryVisits      TripCountryVisit[]
+  templateCloneEvents    TemplateCloneEvent[]
+  tripActivities         TripActivityLog[]         @relation("ActivityActor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Trip {
+  id                  String         @id @default(cuid())
+  ownerId             String
+  title               String
+  description         String?
+  destination         String
+  destinationCountry  String?
+  destinationCity     String?
+  budgetTotal         Decimal?       @db.Decimal(12, 2)
+  travelerCount       Int
+  startDate           DateTime
+  endDate             DateTime
+  timezone            String         @default("Asia/Bangkok")
+  coverImageUrl       String?
+  status              TripStatus     @default(DRAFT)
+  visibility          TripVisibility @default(PRIVATE)
+  endedAt             DateTime?
+  endedByUserId       String?
+  isTemplatePublished Boolean        @default(false)
+
+  owner          User                @relation("TripOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members        TripMember[]
+  days           TripDay[]
+  invitations    TripInvitation[]
+  ratings        Rating[]
+  publicTemplate PublicTemplate?
+  notifications  Notification[]
+  reminders      ScheduledReminder[]
+  activities     TripActivityLog[]
+  countryVisits  TripCountryVisit[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([visibility])
+  @@index([startDate, endDate])
+}
+
+model TripMember {
+  id            String         @id @default(cuid())
+  tripId        String
+  userId        String
+  role          TripMemberRole @default(VIEWER)
+  joinedAt      DateTime       @default(now())
+  addedByUserId String?
+  canRate       Boolean        @default(true)
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([userId])
+  @@index([tripId, role])
+}
+
+model TripDay {
+  id        String   @id @default(cuid())
+  tripId    String
+  dayNumber Int
+  date      DateTime
+  title     String?
+  note      String?
+
+  trip  Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  items ItineraryItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tripId, dayNumber])
+  @@index([tripId, date])
+}
+
+model ItineraryItem {
+  id              String    @id @default(cuid())
+  tripDayId       String
+  title           String
+  description     String?
+  placeName       String?
+  placeAddress    String?
+  country         String?
+  city            String?
+  latitude        Decimal?  @db.Decimal(10, 7)
+  longitude       Decimal?  @db.Decimal(10, 7)
+  startTime       DateTime?
+  endTime         DateTime?
+  estimatedCost   Decimal?  @db.Decimal(12, 2)
+  currency        String?   @default("THB")
+  note            String?
+  sortOrder       Int       @default(0)
+  createdByUserId String?
+  isCompleted     Boolean   @default(false)
+
+  tripDay   TripDay             @relation(fields: [tripDayId], references: [id], onDelete: Cascade)
+  reminders ScheduledReminder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripDayId, sortOrder])
+  @@index([startTime])
+}
+
+model TripInvitation {
+  id            String           @id @default(cuid())
+  tripId        String
+  inviterId     String
+  inviteeUserId String?
+  inviteeEmail  String?
+  inviteCode    String           @unique
+  message       String?
+  status        InvitationStatus @default(PENDING)
+  expiresAt     DateTime?
+  respondedAt   DateTime?
+
+  trip    Trip  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  inviter User  @relation("InvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee User? @relation("InvitationInvitee", fields: [inviteeUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId])
+  @@index([inviteeUserId])
+  @@index([inviteeEmail])
+  @@index([status])
+}
+
+model PublicTemplate {
+  id                 String         @id @default(cuid())
+  sourceTripId       String         @unique
+  publishedById      String
+  slug               String         @unique
+  title              String
+  description        String?
+  destination        String
+  destinationCountry String?
+  destinationCity    String?
+  estimatedBudget    Decimal?       @db.Decimal(12, 2)
+  totalDays          Int
+  coverImageUrl      String?
+  status             TemplateStatus @default(PUBLISHED)
+  isFeatured         Boolean        @default(false)
+  isActive           Boolean        @default(true)
+  cloneCount         Int            @default(0)
+  averageRating      Decimal?       @db.Decimal(3, 2)
+  ratingCount        Int            @default(0)
+
+  sourceTrip  Trip                 @relation(fields: [sourceTripId], references: [id], onDelete: Cascade)
+  publishedBy User                 @relation("TemplatePublisher", fields: [publishedById], references: [id], onDelete: Cascade)
+  days        TemplateDay[]
+  ratings     Rating[]
+  cloneEvents TemplateCloneEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, isActive])
+  @@index([destinationCountry])
+  @@index([isFeatured])
+}
+
+model TemplateDay {
+  id         String  @id @default(cuid())
+  templateId String
+  dayNumber  Int
+  title      String?
+  note       String?
+
+  template PublicTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  items    TemplateItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([templateId, dayNumber])
+}
+
+model TemplateItem {
+  id                      String   @id @default(cuid())
+  templateDayId           String
+  title                   String
+  description             String?
+  placeName               String?
+  placeAddress            String?
+  country                 String?
+  city                    String?
+  latitude                Decimal? @db.Decimal(10, 7)
+  longitude               Decimal? @db.Decimal(10, 7)
+  suggestedStartOffsetMin Int?
+  suggestedEndOffsetMin   Int?
+  estimatedCost           Decimal? @db.Decimal(12, 2)
+  currency                String?  @default("THB")
+  note                    String?
+  sortOrder               Int      @default(0)
+
+  templateDay TemplateDay @relation(fields: [templateDayId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([templateDayId, sortOrder])
+}
+
+model Rating {
+  id         String           @id @default(cuid())
+  userId     String
+  tripId     String?
+  templateId String?
+  targetType RatingTargetType
+  score      Int
+  comment    String?
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip     Trip?           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  template PublicTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([tripId])
+  @@index([templateId])
+}
+
+model AchievementDefinition {
+  id            String                   @id @default(cuid())
+  code          String                   @unique
+  name          String
+  description   String
+  icon          String?
+  category      AchievementCategory
+  conditionType AchievementConditionType
+  targetValue   Int
+  isActive      Boolean                  @default(true)
+  sortOrder     Int                      @default(0)
+
+  progresses UserAchievementProgress[]
+  unlockedBy UserAchievement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserAchievementProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  achievementId   String
+  currentValue    Int       @default(0)
+  lastEvaluatedAt DateTime?
+  isCompleted     Boolean   @default(false)
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, achievementId])
+  @@index([userId, isCompleted])
+}
+
+model UserAchievement {
+  id             String   @id @default(cuid())
+  userId         String
+  achievementId  String
+  unlockedAt     DateTime @default(now())
+  notificationId String?
+
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement AchievementDefinition @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt])
+}
+
+model Notification {
+  id       String           @id @default(cuid())
+  userId   String
+  tripId   String?
+  type     NotificationType
+  title    String
+  body     String
+  dataJson Json?
+  isRead   Boolean          @default(false)
+  readAt   DateTime?
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip       Trip?                  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  deliveries NotificationDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isRead, createdAt])
+  @@index([tripId])
+}
+
+model NotificationDelivery {
+  id             String                     @id @default(cuid())
+  notificationId String
+  userId         String
+  channel        NotificationChannel
+  status         NotificationDeliveryStatus @default(PENDING)
+  errorMessage   String?
+  sentAt         DateTime?
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([notificationId])
+  @@index([userId, channel, status])
+}
+
+model PushSubscription {
+  id         String    @id @default(cuid())
+  userId     String
+  endpoint   String    @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+}
+
+model ScheduledReminder {
+  id              String         @id @default(cuid())
+  userId          String
+  tripId          String
+  itineraryItemId String?
+  type            ReminderType
+  title           String
+  body            String
+  scheduledAtUtc  DateTime
+  sentAt          DateTime?
+  status          ReminderStatus @default(PENDING)
+  dedupeKey       String         @unique
+  payloadJson     Json?
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip          Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  itineraryItem ItineraryItem? @relation(fields: [itineraryItemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, scheduledAtUtc])
+  @@index([userId])
+  @@index([tripId])
+}
+
+model TripCountryVisit {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  country   String
+  city      String?
+  countedAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId, country])
+  @@index([userId, country])
+}
+
+model TemplateCloneEvent {
+  id             String   @id @default(cuid())
+  templateId     String
+  clonedByUserId String
+  createdTripId  String?
+  clonedAt       DateTime @default(now())
+
+  template PublicTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  clonedBy User           @relation(fields: [clonedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, clonedAt])
+  @@index([clonedByUserId, clonedAt])
+}
+
+model TripActivityLog {
+  id           String  @id @default(cuid())
+  tripId       String
+  actorUserId  String?
+  action       String
+  targetType   String?
+  targetId     String?
+  metadataJson Json?
+
+  trip  Trip  @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  actor User? @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([tripId, createdAt])
+  @@index([actorUserId])
+}
