@@ -31,7 +31,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div className="container mx-auto px-4 py-8">
       <h1>Tripify</h1>
 
       <p>Session email: {sessionEmail ?? "Not signed in"}</p>
