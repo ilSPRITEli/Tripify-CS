@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 export default function AuthCallback() {
+  const navigate = useNavigate();
   const [message, setMessage] = useState("Signing you in...");
 
   useEffect(() => {
@@ -18,11 +20,15 @@ export default function AuthCallback() {
         return;
       }
 
-      window.location.href = "/";
+      navigate("/dashboard", { replace: true });
     };
 
     void run();
-  }, []);
+  }, [navigate]);
 
-  return <div>{message}</div>;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <p className="text-muted-foreground text-sm">{message}</p>
+    </div>
+  );
 }
