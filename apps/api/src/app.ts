@@ -3,7 +3,7 @@ import { Elysia } from "elysia";
 import { prisma } from "./lib/prisma";
 import { authPlugin } from "./plugins/auth";
 
-export const app = new Elysia()
+const app = new Elysia()
   .use(
     cors({
       origin: "http://localhost:5173",
@@ -57,4 +57,6 @@ export const app = new Elysia()
       },
     };
   });
+
+export default app;
 export type App = typeof app;
