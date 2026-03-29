@@ -1,6 +1,6 @@
 import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import { getPrisma } from "./lib/prisma";
+import { prisma } from "./lib/prisma";
 
 const app = new Elysia()
   .use(
@@ -16,7 +16,6 @@ const app = new Elysia()
   }))
   .get("/db-check", async ({ set }) => {
     try {
-      const prisma = getPrisma();
       const userCount = await prisma.user.count();
 
       return {
