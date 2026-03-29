@@ -1,7 +1,7 @@
 import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
-import { prisma } from "./lib/prisma";
-import { authPlugin } from "./plugins/auth";
+import { prisma } from "./lib/prisma.js";
+import { authPlugin } from "./plugins/auth.js";
 
 const app = new Elysia()
   .use(

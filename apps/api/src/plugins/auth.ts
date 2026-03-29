@@ -1,7 +1,7 @@
 import { bearer } from "@elysiajs/bearer";
 import { Elysia } from "elysia";
-import { prisma } from "../lib/prisma";
-import { supabase } from "../lib/supabase";
+import { prisma } from "../lib/prisma.js";
+import { supabase } from "../lib/supabase.js";
 
 export const authPlugin = new Elysia({ name: "auth" })
   .use(bearer())
