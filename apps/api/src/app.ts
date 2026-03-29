@@ -57,5 +57,4 @@ export const app = new Elysia()
       },
     };
   });
-
 export type App = typeof app;
