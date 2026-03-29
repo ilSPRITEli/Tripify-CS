@@ -25,5 +25,3 @@ export function getPrisma() {
 
   return prisma;
 }
-
-export const prisma = getPrisma();

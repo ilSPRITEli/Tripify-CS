@@ -1,6 +1,6 @@
 import { bearer } from "@elysiajs/bearer";
 import { Elysia } from "elysia";
-import { prisma } from "../lib/prisma";
+import { getPrisma } from "../lib/prisma";
 import { supabase } from "../lib/supabase";
 
 export const authPlugin = new Elysia({ name: "auth" })
@@ -18,6 +18,8 @@ export const authPlugin = new Elysia({ name: "auth" })
     }
 
     const authUser = data.user;
+
+    const prisma = getPrisma();
 
     const currentUser = await prisma.user.upsert({
       where: {
