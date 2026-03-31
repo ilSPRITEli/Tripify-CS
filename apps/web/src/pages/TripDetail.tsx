@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import type {
   ItineraryItemDto,
   TripDayDto,
@@ -22,7 +22,7 @@ import {
   StickyNote,
   Users,
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -55,16 +55,24 @@ function formatTime(iso: string | null) {
   });
 }
 
+/** API / Eden may return ISO strings or Date instances */
+function formatTripDayYmd(value: string | Date) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    return typeof value === "string" ? value.slice(0, 10) : "—";
+  }
+  return d.toISOString().slice(0, 10);
+}
+
 function ItemRow({ item }: { item: ItineraryItemDto }) {
   const start = formatTime(item.startTime);
   const end = formatTime(item.endTime);
-  const timeRange =
-    start && end ? `${start} – ${end}` : start ?? end ?? null;
+  const timeRange = start && end ? `${start} – ${end}` : (start ?? end ?? null);
 
   return (
     <div className="group relative ml-6 border-l-2 border-primary/20 pb-6 pl-6 last:pb-0">
       <div className="bg-primary absolute top-0 -left-[9px] h-4 w-4 rounded-full border-2 border-background" />
-      <div className="rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="border-border/80 shadow-card hover:shadow-card-hover rounded-xl border bg-card p-4 transition-shadow">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -96,8 +104,7 @@ function ItemRow({ item }: { item: ItineraryItemDto }) {
           {item.estimatedCost != null && item.estimatedCost > 0 ? (
             <span className="flex items-center gap-1">
               <DollarSign className="h-3 w-3" />
-              {item.estimatedCost.toLocaleString()}{" "}
-              {item.currency ?? "THB"}
+              {item.estimatedCost.toLocaleString()} {item.currency ?? "THB"}
             </span>
           ) : null}
         </div>
@@ -125,7 +132,7 @@ function DaySection({ day }: { day: TripDayDto }) {
   );
 
   return (
-    <div className="rounded-2xl border border-border/80 bg-card/60 p-5 shadow-sm">
+    <div className="border-border/80 shadow-card rounded-2xl border bg-card/70 p-5">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
@@ -149,7 +156,9 @@ function DaySection({ day }: { day: TripDayDto }) {
         )}
       </button>
       {day.note ? (
-        <p className="text-muted-foreground mt-2 ml-[52px] text-sm">{day.note}</p>
+        <p className="text-muted-foreground mt-2 ml-[52px] text-sm">
+          {day.note}
+        </p>
       ) : null}
       <AnimatePresence initial={false}>
         {expanded ? (
@@ -228,7 +237,7 @@ export default function TripDetail() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-muted-foreground text-sm">Loading trip…</p>
       </div>
     );
@@ -236,11 +245,11 @@ export default function TripDetail() {
 
   if (!trip) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-4">
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-4 py-12">
         <p className="text-muted-foreground text-sm">
           This trip is unavailable.
         </p>
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="rounded-full">
           <Link to="/trips">Back to my trips</Link>
         </Button>
       </div>
@@ -253,145 +262,142 @@ export default function TripDetail() {
       : null;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-muted/15 to-background px-4 py-10">
-      <div className="mx-auto w-full max-w-4xl space-y-8">
-        <Link
-          to="/trips"
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          My trips
-        </Link>
+    <div className="container mx-auto py-8">
+      <Link
+        to="/trips"
+        className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-2 text-sm transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        My trips
+      </Link>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="space-y-8"
-        >
-          <div className="gradient-hero text-primary-foreground rounded-2xl p-8 shadow-elevated">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 space-y-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-primary-foreground ring-1 ring-white/25 backdrop-blur-sm">
-                    {sc?.label ?? trip.status.replaceAll("_", " ")}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="space-y-8"
+      >
+        <div className="gradient-hero text-primary-foreground rounded-2xl p-8 shadow-elevated md:p-10">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-primary-foreground ring-1 ring-white/25 backdrop-blur-sm">
+                  {sc?.label ?? trip.status.replaceAll("_", " ")}
+                </span>
+                {trip.isTemplatePublished ? (
+                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium ring-1 ring-white/25">
+                    Published template
                   </span>
-                  {trip.isTemplatePublished ? (
-                    <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium ring-1 ring-white/25">
-                      Published template
-                    </span>
-                  ) : null}
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {trip.title}
-                </h1>
-                <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm opacity-95">
+                ) : null}
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {trip.title}
+              </h1>
+              <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm opacity-95">
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  {trip.destination}
+                  {trip.destinationCity ? ` · ${trip.destinationCity}` : null}
+                  {trip.destinationCountry
+                    ? ` · ${trip.destinationCountry}`
+                    : null}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CalendarRange className="h-4 w-4 shrink-0" />
+                  {formatTripDayYmd(trip.startDate)} →{" "}
+                  {formatTripDayYmd(trip.endDate)}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Users className="h-4 w-4 shrink-0" />
+                  {trip.travelerCount} travelers
+                </span>
+                {budgetLabel ? (
                   <span className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 shrink-0" />
-                    {trip.destination}
-                    {trip.destinationCity
-                      ? ` · ${trip.destinationCity}`
-                      : null}
-                    {trip.destinationCountry
-                      ? ` · ${trip.destinationCountry}`
-                      : null}
+                    <DollarSign className="h-4 w-4 shrink-0" />
+                    {budgetLabel}
                   </span>
-                  <span className="flex items-center gap-1.5">
-                    <CalendarRange className="h-4 w-4 shrink-0" />
-                    {trip.startDate.slice(0, 10)} → {trip.endDate.slice(0, 10)}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Users className="h-4 w-4 shrink-0" />
-                    {trip.travelerCount} travelers
-                  </span>
-                  {budgetLabel ? (
-                    <span className="flex items-center gap-1.5">
-                      <DollarSign className="h-4 w-4 shrink-0" />
-                      {budgetLabel}
-                    </span>
-                  ) : null}
-                </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
+          <div className="space-y-4">
+            {trip.description ? (
+              <Card className="border-border/60 shadow-card rounded-2xl">
+                <CardContent className="text-foreground/90 p-5 text-sm leading-relaxed">
+                  {trip.description}
+                </CardContent>
+              </Card>
+            ) : null}
+
+            <div>
+              <h2 className="text-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
+                Itinerary
+              </h2>
+              <div className="space-y-4">
+                {trip.days.map((day) => (
+                  <DaySection key={day.id} day={day} />
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-            <div className="space-y-4">
-              {trip.description ? (
-                <Card className="border-border/50">
-                  <CardContent className="text-foreground/90 p-5 text-sm leading-relaxed">
-                    {trip.description}
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              <div>
-                <h2 className="text-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
-                  Itinerary
-                </h2>
-                <div className="space-y-4">
-                  {trip.days.map((day) => (
-                    <DaySection key={day.id} day={day} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <aside className="space-y-4">
-              <div className="rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
-                <h3 className="text-foreground flex items-center gap-2 font-semibold">
-                  <Users className="h-4 w-4" />
-                  Members ({trip.members.length})
-                </h3>
-                <ul className="mt-4 space-y-3">
-                  {trip.members.map((m) => (
-                    <li key={m.id} className="flex items-center gap-3">
-                      {m.user.avatarUrl ? (
-                        <img
-                          src={m.user.avatarUrl}
-                          alt=""
-                          className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-border"
-                        />
-                      ) : (
-                        <div className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                          {m.user.fullName.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {m.user.fullName}
-                        </p>
-                        {m.user.email ? (
-                          <p className="text-muted-foreground truncate text-xs">
-                            {m.user.email}
-                          </p>
-                        ) : null}
+          <aside className="space-y-4">
+            <div className="border-border/80 shadow-card rounded-2xl border bg-card p-6">
+              <h3 className="text-foreground flex items-center gap-2 font-semibold">
+                <Users className="h-4 w-4" />
+                Members ({trip.members.length})
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {trip.members.map((m) => (
+                  <li key={m.id} className="flex items-center gap-3">
+                    {m.user.avatarUrl ? (
+                      <img
+                        src={m.user.avatarUrl}
+                        alt=""
+                        className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-border"
+                      />
+                    ) : (
+                      <div className="bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                        {m.user.fullName.slice(0, 1).toUpperCase()}
                       </div>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-semibold",
-                          m.role === "OWNER"
-                            ? "bg-primary/15 text-primary"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {m.role === "OWNER" ? (
-                          <span className="inline-flex items-center gap-0.5">
-                            <Crown className="h-3 w-3" />
-                            Owner
-                          </span>
-                        ) : (
-                          "Member"
-                        )}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </aside>
-          </div>
-        </motion.div>
-      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {m.user.fullName}
+                      </p>
+                      {m.user.email ? (
+                        <p className="text-muted-foreground truncate text-xs">
+                          {m.user.email}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-semibold",
+                        m.role === "OWNER"
+                          ? "bg-primary/15 text-primary"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {m.role === "OWNER" ? (
+                        <span className="inline-flex items-center gap-0.5">
+                          <Crown className="h-3 w-3" />
+                          Owner
+                        </span>
+                      ) : (
+                        "Member"
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { api } from "@/lib/api";
-import { TRIP_STATUS, type TripListItemDto, type TripStatus } from "@repo/shared";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { CalendarRange, LayoutGrid, MapPin, Plus } from "lucide-react";
+import {
+  TRIP_STATUS,
+  type TripListItemDto,
+  type TripStatus,
+} from "@repo/shared";
+import { Calendar, Crown, LayoutTemplate, MapPin, Plus } from "lucide-react";
+import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -19,16 +23,84 @@ const FILTER_OPTIONS: { label: string; value: ListFilter }[] = [
   { label: "Ended early", value: "ENDED_EARLY" },
 ];
 
-function statusBadgeClass(status: TripStatus) {
-  const map: Partial<Record<TripStatus, string>> = {
-    DRAFT: "bg-muted text-muted-foreground",
-    ACTIVE: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-    COMPLETED: "bg-primary/15 text-primary",
-    ENDED_EARLY: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
-    ARCHIVED: "bg-muted text-muted-foreground",
-    CANCELLED: "bg-destructive/10 text-destructive",
-  };
-  return map[status] ?? "bg-muted text-muted-foreground";
+const statusConfig: Partial<
+  Record<TripStatus, { label: string; className: string }>
+> = {
+  ACTIVE: {
+    label: "Active",
+    className: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  },
+  DRAFT: { label: "Draft", className: "bg-muted text-muted-foreground" },
+  COMPLETED: { label: "Completed", className: "bg-primary/10 text-primary" },
+  ENDED_EARLY: {
+    label: "Ended early",
+    className: "bg-amber-500/15 text-amber-800 dark:text-amber-300",
+  },
+  ARCHIVED: { label: "Archived", className: "bg-muted text-muted-foreground" },
+  CANCELLED: {
+    label: "Cancelled",
+    className: "bg-destructive/10 text-destructive",
+  },
+};
+
+function TripCard({ trip, index }: { trip: TripListItemDto; index: number }) {
+  const sc = statusConfig[trip.status];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.06, duration: 0.3 }}
+    >
+      <Link
+        to={`/trips/${trip.id}`}
+        className="group block rounded-2xl border border-border bg-card p-6 shadow-card transition-all hover:border-primary/20 hover:shadow-elevated"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+              sc?.className ?? "bg-muted text-muted-foreground",
+            )}
+          >
+            {sc?.label ?? trip.status.replaceAll("_", " ")}
+          </span>
+          {trip.isTemplatePublished ? (
+            <span className="text-accent-foreground flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 text-xs font-semibold">
+              <LayoutTemplate className="h-3 w-3" />
+              Template
+            </span>
+          ) : null}
+        </div>
+        <h3 className="mt-3 text-lg font-semibold transition-colors group-hover:text-primary">
+          {trip.title}
+        </h3>
+        <div className="mt-3 flex flex-wrap gap-4 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            {trip.destination}
+            {trip.destinationCountry ? `, ${trip.destinationCountry}` : null}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 shrink-0" />
+            {new Date(trip.startDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+            })}
+            {" — "}
+            {new Date(trip.endDate).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+          <Crown className="h-3.5 w-3.5" />
+          {trip.owner.fullName}
+        </div>
+      </Link>
+    </motion.div>
+  );
 }
 
 export default function TripList() {
@@ -36,11 +108,16 @@ export default function TripList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusParam = (searchParams.get("status") ?? "") as ListFilter;
 
-  const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState<TripListItemDto[]>([]);
 
   const load = useCallback(async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      navigate("/", { replace: true });
+      return;
+    }
+
     setLoading(true);
     const query: { status?: string } = {};
     if (
@@ -66,24 +143,11 @@ export default function TripList() {
       setTrips(payload.data);
     }
     setLoading(false);
-  }, [statusParam]);
+  }, [navigate, statusParam]);
 
   useEffect(() => {
-    const run = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        navigate("/", { replace: true });
-        return;
-      }
-      setReady(true);
-    };
-    void run();
-  }, [navigate]);
-
-  useEffect(() => {
-    if (!ready) return;
     void load();
-  }, [ready, load]);
+  }, [load]);
 
   const setFilter = (value: ListFilter) => {
     if (value === "") {
@@ -93,126 +157,63 @@ export default function TripList() {
     }
   };
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <p className="text-muted-foreground text-sm">Loading…</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-muted/15 to-background px-4 py-10">
-      <div className="mx-auto w-full max-w-3xl space-y-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Link
-              to="/dashboard"
-              className="text-muted-foreground hover:text-foreground mb-2 inline-block text-sm"
-            >
-              ← Account
-            </Link>
-            <h1 className="text-foreground flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <LayoutGrid className="text-primary h-7 w-7" />
-              My trips
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Trips you own or are a member of.
-            </p>
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Trips</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Plan, manage, and track your adventures
+          </p>
+        </div>
+        <Button asChild className="shrink-0 gap-2 rounded-full shadow-card">
+          <Link to="/trips/create">
+            <Plus className="h-4 w-4" />
+            Create trip
+          </Link>
+        </Button>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.label}
+            type="button"
+            onClick={() => setFilter(opt.value)}
+            className={cn(
+              "rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+              statusParam === opt.value
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-muted-foreground mt-10 text-sm">Loading trips…</p>
+      ) : trips.length === 0 ? (
+        <div className="mt-16 text-center">
+          <div className="bg-muted/60 mx-auto flex h-20 w-20 items-center justify-center rounded-2xl shadow-card">
+            <MapPin className="text-muted-foreground h-9 w-9" />
           </div>
-          <Button asChild className="shrink-0 gap-2 self-start sm:self-auto">
-            <Link to="/trips/create">
-              <Plus className="h-4 w-4" />
-              New trip
-            </Link>
+          <h3 className="mt-6 text-lg font-semibold">No trips yet</h3>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Create your first trip to start planning.
+          </p>
+          <Button asChild className="mt-6 rounded-full">
+            <Link to="/trips/create">Create trip</Link>
           </Button>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {FILTER_OPTIONS.map((opt) => (
-            <Button
-              key={opt.label}
-              type="button"
-              size="sm"
-              variant={statusParam === opt.value ? "default" : "outline"}
-              className="rounded-full"
-              onClick={() => setFilter(opt.value)}
-            >
-              {opt.label}
-            </Button>
+      ) : (
+        <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          {trips.map((trip, i) => (
+            <TripCard key={trip.id} trip={trip} index={i} />
           ))}
         </div>
-
-        {loading ? (
-          <p className="text-muted-foreground text-sm">Loading trips…</p>
-        ) : trips.length === 0 ? (
-          <Card className="border-border/50 shadow-elevated">
-            <CardContent className="flex flex-col items-center gap-4 py-14 text-center">
-              <p className="text-muted-foreground max-w-sm text-sm">
-                No trips yet. Create one to start planning days and activities.
-              </p>
-              <Button asChild>
-                <Link to="/trips/create">Create your first trip</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <ul className="space-y-3">
-            {trips.map((trip) => (
-              <li key={trip.id}>
-                <Link to={`/trips/${trip.id}`} className="block">
-                  <Card className="border-border/50 hover:border-primary/25 shadow-card transition-colors hover:shadow-elevated">
-                    <CardContent className="p-5">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1 space-y-2">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h2 className="text-foreground truncate text-lg font-semibold">
-                              {trip.title}
-                            </h2>
-                            <span
-                              className={cn(
-                                "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                                statusBadgeClass(trip.status),
-                              )}
-                            >
-                              {trip.status.replaceAll("_", " ")}
-                            </span>
-                            {trip.isTemplatePublished ? (
-                              <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-medium">
-                                Template
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                            <span className="flex items-center gap-1.5">
-                              <MapPin className="text-primary h-3.5 w-3.5 shrink-0" />
-                              {trip.destination}
-                              {trip.destinationCountry
-                                ? ` · ${trip.destinationCountry}`
-                                : null}
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <CalendarRange className="h-3.5 w-3.5 shrink-0" />
-                              {trip.startDate.slice(0, 10)} →{" "}
-                              {trip.endDate.slice(0, 10)}
-                            </span>
-                          </div>
-                          <p className="text-muted-foreground text-xs">
-                            Owner:{" "}
-                            <span className="text-foreground font-medium">
-                              {trip.owner.fullName}
-                            </span>
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
     </div>
   );
 }

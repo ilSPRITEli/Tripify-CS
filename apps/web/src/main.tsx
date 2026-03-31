@@ -7,8 +7,9 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
 import AuthCallback from "./pages/AuthCallback";
 import CreateTrip from "./pages/CreateTrip";
-import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
+import Invitations from "./pages/Invitations";
+import Templates from "./pages/Templates";
 import TripDetail from "./pages/TripDetail";
 import TripList from "./pages/TripList";
 
@@ -18,12 +19,16 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
+    path: "/login",
+    element: <Home />,
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallback />,
+  },
+  {
     element: <AppLayout />,
     children: [
-      {
-        path: "/dashboard",
-        element: <Dashboard />,
-      },
       {
         path: "/trips/create",
         element: <CreateTrip />,
@@ -36,11 +41,15 @@ const router = createBrowserRouter([
         path: "/trips/:tripId",
         element: <TripDetail />,
       },
+      {
+        path: "/invitations",
+        element: <Invitations />,
+      },
+      {
+        path: "/templates",
+        element: <Templates />,
+      },
     ],
-  },
-  {
-    path: "/auth/callback",
-    element: <AuthCallback />,
   },
 ]);
 

@@ -1,4 +1,3 @@
-import logo from "@/assets/icons.svg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
@@ -18,7 +17,7 @@ export default function Home() {
     const check = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate("/dashboard", { replace: true });
+        navigate("/trips", { replace: true });
       }
     };
 
@@ -29,7 +28,7 @@ export default function Home() {
     } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
         if (session) {
-          navigate("/dashboard", { replace: true });
+          navigate("/trips", { replace: true });
         }
       },
     );
@@ -48,61 +47,65 @@ export default function Home() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-linear-to-br from-background via-muted/30 to-background px-4">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-muted),transparent_50%),radial-gradient(ellipse_at_bottom_left,var(--color-primary)/8,transparent_45%)]" />
+
       <motion.div
-        className="absolute top-20 left-10 text-primary/10"
-        animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
+        className="absolute top-16 left-[8%] text-primary/15 md:left-16"
+        animate={{ y: [0, -12, 0], rotate: [0, 6, 0] }}
+        transition={{ duration: 7, repeat: Infinity }}
+      >
+        <Plane className="h-20 w-20 md:h-24 md:w-24" />
+      </motion.div>
+      <motion.div
+        className="absolute right-[6%] bottom-24 text-accent/20 md:right-14"
+        animate={{ y: [0, 14, 0] }}
         transition={{ duration: 6, repeat: Infinity }}
       >
-        <Plane className="h-16 w-16" />
-      </motion.div>
-      <motion.div
-        className="absolute right-10 bottom-20 text-accent/15"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 5, repeat: Infinity }}
-      >
-        <MapPin className="h-12 w-12" />
+        <MapPin className="h-14 w-14 md:h-16 md:w-16" />
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <Card className="border-border/50 shadow-elevated backdrop-blur-sm">
-          <CardContent className="flex flex-col items-center gap-6 px-8 pt-10 pb-10">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl">
-                <img src={logo} alt="Tripify" width={56} height={56} />
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+          className="w-full max-w-md"
+        >
+          <Card className="rounded-2xl border-border/60 shadow-elevated backdrop-blur-sm">
+            <CardContent className="flex flex-col items-center gap-8 px-8 pt-12 pb-10">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="gradient-primary flex h-16 w-16 items-center justify-center rounded-2xl shadow-primary-glow">
+                  <Plane className="text-primary-foreground h-8 w-8" />
+                </div>
+                <div>
+                  <h1 className="text-gradient-primary text-3xl font-bold tracking-tight">
+                    Tripify
+                  </h1>
+                  <p className="text-muted-foreground mt-2 max-w-xs text-sm leading-relaxed">
+                    Plan trips, invite friends, and explore the world together.
+                  </p>
+                </div>
               </div>
-              <h1 className="text-foreground text-2xl font-bold tracking-tight">
-                Welcome to Tripify
-              </h1>
-              <p className="text-muted-foreground max-w-xs text-center text-sm">
-                Plan trips, invite friends, and explore the world together.
+
+              <Button
+                type="button"
+                onClick={() => void handleGoogleSignIn()}
+                variant="outline"
+                size="lg"
+                className="h-12 w-full gap-3 rounded-xl text-base font-medium shadow-card"
+              >
+                <FcGoogle className="size-5" />
+                Continue with Google
+              </Button>
+
+              <p className="text-muted-foreground text-center text-xs leading-relaxed">
+                By signing in, you agree to our Terms and Privacy Policy.
               </p>
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => void handleGoogleSignIn()}
-              variant="outline"
-              size="lg"
-              className="h-12 w-full gap-3 text-base font-medium"
-            >
-              <FcGoogle className="size-5" />
-              Continue with Google
-            </Button>
-
-            <p className="text-muted-foreground text-center text-xs">
-              By signing in, you agree to our{" "}
-              <span className="cursor-pointer underline">Terms</span> and{" "}
-              <span className="cursor-pointer underline">Privacy Policy</span>.
-            </p>
-          </CardContent>
-        </Card>
-      </motion.div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }

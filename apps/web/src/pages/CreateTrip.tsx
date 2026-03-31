@@ -1,14 +1,23 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  Globe,
+  Image,
+  Loader2,
+  MapPin,
+  Users,
+} from "lucide-react";
+import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateTrip() {
   const navigate = useNavigate();
@@ -114,158 +123,206 @@ export default function CreateTrip() {
 
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-muted-foreground text-sm">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-background via-muted/20 to-background px-4 py-10">
-      <div className="mx-auto w-full max-w-lg">
-        <Link
-          to="/trips"
-          className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-2 text-sm"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Link>
+    <div className="container mx-auto py-8">
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="text-muted-foreground hover:text-foreground mb-6 flex items-center gap-2 text-sm transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </button>
 
-        <Card className="border-border/50 shadow-elevated">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">New trip</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  maxLength={150}
-                  placeholder="Japan Spring Trip"
-                />
-              </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h1 className="text-3xl font-bold tracking-tight">Create a new trip</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Set up your adventure details
+        </p>
 
-              <div className="space-y-2">
-                <Label htmlFor="destination">Destination</Label>
-                <Input
-                  id="destination"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  required
-                  maxLength={150}
-                  placeholder="Tokyo"
-                />
-              </div>
+        <form className="mt-8 space-y-6" onSubmit={(e) => void handleSubmit(e)}>
+          <div className="border-border bg-muted/40 flex h-36 cursor-not-allowed items-center justify-center rounded-2xl border-2 border-dashed opacity-80">
+            <div className="text-center">
+              <Image className="text-muted-foreground mx-auto h-8 w-8" />
+              <p className="text-muted-foreground mt-2 text-sm">
+                Cover image URL below (file upload later)
+              </p>
+            </div>
+          </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country (optional)</Label>
-                  <Input
-                    id="country"
-                    value={destinationCountry}
-                    onChange={(e) => setDestinationCountry(e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">City (optional)</Label>
-                  <Input
-                    id="city"
-                    value={destinationCity}
-                    onChange={(e) => setDestinationCity(e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
-              </div>
+          <div>
+            <Label htmlFor="title">Trip title</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              maxLength={150}
+              placeholder="e.g. Japan spring trip"
+              className="mt-1.5 rounded-xl"
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (optional)</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  maxLength={1000}
-                  rows={3}
-                />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
+              <Label
+                className="flex items-center gap-1.5"
+                htmlFor="destination"
+              >
+                <MapPin className="h-3.5 w-3.5" />
+                Destination
+              </Label>
+              <Input
+                id="destination"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                required
+                maxLength={150}
+                placeholder="Tokyo"
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-1.5" htmlFor="travelers">
+                <Users className="h-3.5 w-3.5" />
+                Travelers
+              </Label>
+              <Input
+                id="travelers"
+                type="number"
+                min={1}
+                required
+                value={travelerCount}
+                onChange={(e) => setTravelerCount(e.target.value)}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+          </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="budget">Budget (optional)</Label>
-                  <Input
-                    id="budget"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={budgetTotal}
-                    onChange={(e) => setBudgetTotal(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="travelers">Travelers</Label>
-                  <Input
-                    id="travelers"
-                    type="number"
-                    min={1}
-                    required
-                    value={travelerCount}
-                    onChange={(e) => setTravelerCount(e.target.value)}
-                  />
-                </div>
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="country">Country (optional)</Label>
+              <Input
+                id="country"
+                value={destinationCountry}
+                onChange={(e) => setDestinationCountry(e.target.value)}
+                maxLength={100}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div>
+              <Label htmlFor="city">City (optional)</Label>
+              <Input
+                id="city"
+                value={destinationCity}
+                onChange={(e) => setDestinationCity(e.target.value)}
+                maxLength={100}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+          </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="start">Start date</Label>
-                  <Input
-                    id="start"
-                    type="date"
-                    required
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end">End date</Label>
-                  <Input
-                    id="end"
-                    type="date"
-                    required
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-              </div>
+          <div>
+            <Label htmlFor="description">Description (optional)</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={1000}
+              rows={3}
+              className="mt-1.5 rounded-xl"
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="cover">Cover image URL (optional)</Label>
-                <Input
-                  id="cover"
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label className="flex items-center gap-1.5" htmlFor="budget">
+                <DollarSign className="h-3.5 w-3.5" />
+                Budget (optional)
+              </Label>
+              <Input
+                id="budget"
+                type="number"
+                min={0}
+                step="0.01"
+                value={budgetTotal}
+                onChange={(e) => setBudgetTotal(e.target.value)}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-1.5" htmlFor="cover">
+                <Globe className="h-3.5 w-3.5" />
+                Cover image URL (optional)
+              </Label>
+              <Input
+                id="cover"
+                type="url"
+                value={coverImageUrl}
+                onChange={(e) => setCoverImageUrl(e.target.value)}
+                placeholder="https://…"
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+          </div>
 
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating…
-                  </>
-                ) : (
-                  "Create trip"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label className="flex items-center gap-1.5" htmlFor="start">
+                <Calendar className="h-3.5 w-3.5" />
+                Start date
+              </Label>
+              <Input
+                id="start"
+                type="date"
+                required
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div>
+              <Label className="flex items-center gap-1.5" htmlFor="end">
+                <Calendar className="h-3.5 w-3.5" />
+                End date
+              </Label>
+              <Input
+                id="end"
+                type="date"
+                required
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="h-11 w-full rounded-full text-base shadow-card"
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating…
+              </>
+            ) : (
+              "Create trip"
+            )}
+          </Button>
+        </form>
+      </motion.div>
     </div>
   );
 }
