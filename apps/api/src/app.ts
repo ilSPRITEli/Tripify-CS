@@ -1,8 +1,8 @@
-import type { AuthMeDto } from "@repo/shared";
 import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { prisma } from "./lib/prisma";
-import { authPlugin } from "./plugins/auth";
+import { authRoutes } from "./routes/auth.routes";
+import { tripsRoutes } from "./routes/trips.routes";
 
 const app = new Elysia()
   .use(
@@ -11,7 +11,8 @@ const app = new Elysia()
       methods: ["GET", "POST", "PUT", "DELETE"],
     }),
   )
-  .use(authPlugin)
+  .use(authRoutes)
+  .use(tripsRoutes)
   .get("/health", () => ({
     ok: true,
     message: "API is running",
@@ -36,28 +37,6 @@ const app = new Elysia()
         error: error instanceof Error ? error.message : "Unknown error",
       };
     }
-  })
-  .get("/auth/me", ({ set, currentUser, authUser }) => {
-    if (!currentUser || !authUser) {
-      set.status = 401;
-      return {
-        ok: false,
-        message: "Unauthorized",
-      };
-    }
-
-    const data: AuthMeDto = {
-      id: currentUser.id,
-      supabaseAuthId: currentUser.supabaseAuthId,
-      email: currentUser.email,
-      fullName: currentUser.fullName,
-      avatarUrl: currentUser.avatarUrl,
-      username: currentUser.username,
-      bio: currentUser.bio,
-      country: currentUser.country,
-    };
-
-    return { ok: true, data };
   });
 
 export default app;

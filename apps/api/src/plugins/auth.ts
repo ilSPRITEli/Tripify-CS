@@ -5,7 +5,7 @@ import { upsertAuthUser } from "../services/auth.service";
 
 export const authPlugin = new Elysia({ name: "auth" })
   .use(bearer())
-  .derive({ as: "scoped" }, async ({ bearer, set }) => {
+  .derive({ as: "global" }, async ({ bearer, set }) => {
     if (!bearer) {
       return { currentUser: null, authUser: null };
     }

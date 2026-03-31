@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import type { AuthMeDto } from "@repo/shared";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Plus, User } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -68,21 +68,29 @@ export default function Dashboard() {
     <div className="min-h-screen bg-linear-to-br from-background via-muted/20 to-background px-4 py-10">
       <div className="mx-auto w-full max-w-lg">
         <Card className="border-border/50 shadow-elevated">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3 space-y-0 pb-4">
             <CardTitle className="flex items-center gap-2 text-xl font-semibold">
               <User className="text-primary h-5 w-5" />
               Your account
             </CardTitle>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => void handleLogout()}
-            >
-              <LogOut className="h-4 w-4" />
-              Log out
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" className="gap-2" asChild>
+                <Link to="/trips/create">
+                  <Plus className="h-4 w-4" />
+                  New trip
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => void handleLogout()}
+              >
+                <LogOut className="h-4 w-4" />
+                Log out
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {me ? (
