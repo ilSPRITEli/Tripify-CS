@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+---
+
+## Business Rules for Current Demo Scope
+
+### Auth
+- Users log in with Google only.
+- When a user logs in, backend should upsert user by `supabaseAuthId`.
+
+### Trip
+- A trip has one owner.
+- Owner is automatically also a member of the trip.
+- When a trip is created, trip days should be generated automatically from startDate to endDate.
+
+### Invitation
+- Only the trip owner can send invitations.
+- Invitations are simple and can target:
+  - an existing user (`inviteeUserId`)
+  - or an email (`inviteeEmail`)
+- When an invitation is accepted:
+  - create `TripMember` if it does not already exist
+  - update invitation status to `ACCEPTED`
+- When declined:
+  - update invitation status to `DECLINED`
+
+### Rating
+- A trip can only be rated after it is completed or ended early.
+- One user can rate one trip only once.
+- Rating score is 1 to 5.
+- Comment is optional.
+
+### Template
+- A template is just a trip with `isTemplatePublished = true`.
+- Publishing a template only updates trip fields:
+  - `isTemplatePublished = true`
+  - `templatePublishedAt = now()`
+- Browsing templates means querying trips where `isTemplatePublished = true`.
+- Cloning a template creates a new trip and copies:
+  - trip basic info
+  - trip days
+  - itinerary items
+- Cloning must not copy:
+  - members
+  - invitations
+  - ratings
+- After cloning, increment `templateUseCount` on the source trip.

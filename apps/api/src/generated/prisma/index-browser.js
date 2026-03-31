@@ -131,8 +131,6 @@ exports.Prisma.UserScalarFieldEnum = {
   username: 'username',
   bio: 'bio',
   country: 'country',
-  isProfilePublic: 'isProfilePublic',
-  lastSeenAt: 'lastSeenAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -152,10 +150,11 @@ exports.Prisma.TripScalarFieldEnum = {
   timezone: 'timezone',
   coverImageUrl: 'coverImageUrl',
   status: 'status',
-  visibility: 'visibility',
   endedAt: 'endedAt',
   endedByUserId: 'endedByUserId',
   isTemplatePublished: 'isTemplatePublished',
+  templatePublishedAt: 'templatePublishedAt',
+  templateUseCount: 'templateUseCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -166,8 +165,7 @@ exports.Prisma.TripMemberScalarFieldEnum = {
   userId: 'userId',
   role: 'role',
   joinedAt: 'joinedAt',
-  addedByUserId: 'addedByUserId',
-  canRate: 'canRate'
+  addedByUserId: 'addedByUserId'
 };
 
 exports.Prisma.TripDayScalarFieldEnum = {
@@ -210,7 +208,6 @@ exports.Prisma.TripInvitationScalarFieldEnum = {
   inviterId: 'inviterId',
   inviteeUserId: 'inviteeUserId',
   inviteeEmail: 'inviteeEmail',
-  inviteCode: 'inviteCode',
   message: 'message',
   status: 'status',
   expiresAt: 'expiresAt',
@@ -219,198 +216,19 @@ exports.Prisma.TripInvitationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.PublicTemplateScalarFieldEnum = {
-  id: 'id',
-  sourceTripId: 'sourceTripId',
-  publishedById: 'publishedById',
-  slug: 'slug',
-  title: 'title',
-  description: 'description',
-  destination: 'destination',
-  destinationCountry: 'destinationCountry',
-  destinationCity: 'destinationCity',
-  estimatedBudget: 'estimatedBudget',
-  totalDays: 'totalDays',
-  coverImageUrl: 'coverImageUrl',
-  status: 'status',
-  isFeatured: 'isFeatured',
-  isActive: 'isActive',
-  cloneCount: 'cloneCount',
-  averageRating: 'averageRating',
-  ratingCount: 'ratingCount',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TemplateDayScalarFieldEnum = {
-  id: 'id',
-  templateId: 'templateId',
-  dayNumber: 'dayNumber',
-  title: 'title',
-  note: 'note',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TemplateItemScalarFieldEnum = {
-  id: 'id',
-  templateDayId: 'templateDayId',
-  title: 'title',
-  description: 'description',
-  placeName: 'placeName',
-  placeAddress: 'placeAddress',
-  country: 'country',
-  city: 'city',
-  latitude: 'latitude',
-  longitude: 'longitude',
-  suggestedStartOffsetMin: 'suggestedStartOffsetMin',
-  suggestedEndOffsetMin: 'suggestedEndOffsetMin',
-  estimatedCost: 'estimatedCost',
-  currency: 'currency',
-  note: 'note',
-  sortOrder: 'sortOrder',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.RatingScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   tripId: 'tripId',
-  templateId: 'templateId',
-  targetType: 'targetType',
   score: 'score',
   comment: 'comment',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.AchievementDefinitionScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  name: 'name',
-  description: 'description',
-  icon: 'icon',
-  category: 'category',
-  conditionType: 'conditionType',
-  targetValue: 'targetValue',
-  isActive: 'isActive',
-  sortOrder: 'sortOrder',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.UserAchievementProgressScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  achievementId: 'achievementId',
-  currentValue: 'currentValue',
-  lastEvaluatedAt: 'lastEvaluatedAt',
-  isCompleted: 'isCompleted',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.UserAchievementScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  achievementId: 'achievementId',
-  unlockedAt: 'unlockedAt',
-  notificationId: 'notificationId'
-};
-
-exports.Prisma.NotificationScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  tripId: 'tripId',
-  type: 'type',
-  title: 'title',
-  body: 'body',
-  dataJson: 'dataJson',
-  isRead: 'isRead',
-  readAt: 'readAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.NotificationDeliveryScalarFieldEnum = {
-  id: 'id',
-  notificationId: 'notificationId',
-  userId: 'userId',
-  channel: 'channel',
-  status: 'status',
-  errorMessage: 'errorMessage',
-  sentAt: 'sentAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.PushSubscriptionScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  endpoint: 'endpoint',
-  p256dh: 'p256dh',
-  auth: 'auth',
-  userAgent: 'userAgent',
-  isActive: 'isActive',
-  lastUsedAt: 'lastUsedAt',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.ScheduledReminderScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  tripId: 'tripId',
-  itineraryItemId: 'itineraryItemId',
-  type: 'type',
-  title: 'title',
-  body: 'body',
-  scheduledAtUtc: 'scheduledAtUtc',
-  sentAt: 'sentAt',
-  status: 'status',
-  dedupeKey: 'dedupeKey',
-  payloadJson: 'payloadJson',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.TripCountryVisitScalarFieldEnum = {
-  id: 'id',
-  tripId: 'tripId',
-  userId: 'userId',
-  country: 'country',
-  city: 'city',
-  countedAt: 'countedAt'
-};
-
-exports.Prisma.TemplateCloneEventScalarFieldEnum = {
-  id: 'id',
-  templateId: 'templateId',
-  clonedByUserId: 'clonedByUserId',
-  createdTripId: 'createdTripId',
-  clonedAt: 'clonedAt'
-};
-
-exports.Prisma.TripActivityLogScalarFieldEnum = {
-  id: 'id',
-  tripId: 'tripId',
-  actorUserId: 'actorUserId',
-  action: 'action',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  metadataJson: 'metadataJson',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
-};
-
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -421,12 +239,6 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
-};
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
 };
 exports.AuthProvider = exports.$Enums.AuthProvider = {
   GOOGLE: 'GOOGLE'
@@ -441,16 +253,9 @@ exports.TripStatus = exports.$Enums.TripStatus = {
   CANCELLED: 'CANCELLED'
 };
 
-exports.TripVisibility = exports.$Enums.TripVisibility = {
-  PRIVATE: 'PRIVATE',
-  SHARED: 'SHARED',
-  PUBLIC_TEMPLATE: 'PUBLIC_TEMPLATE'
-};
-
 exports.TripMemberRole = exports.$Enums.TripMemberRole = {
   OWNER: 'OWNER',
-  EDITOR: 'EDITOR',
-  VIEWER: 'VIEWER'
+  MEMBER: 'MEMBER'
 };
 
 exports.InvitationStatus = exports.$Enums.InvitationStatus = {
@@ -462,82 +267,6 @@ exports.InvitationStatus = exports.$Enums.InvitationStatus = {
   CANCELLED: 'CANCELLED'
 };
 
-exports.TemplateStatus = exports.$Enums.TemplateStatus = {
-  DRAFT: 'DRAFT',
-  PUBLISHED: 'PUBLISHED',
-  UNPUBLISHED: 'UNPUBLISHED',
-  ARCHIVED: 'ARCHIVED'
-};
-
-exports.RatingTargetType = exports.$Enums.RatingTargetType = {
-  TRIP: 'TRIP',
-  TEMPLATE: 'TEMPLATE'
-};
-
-exports.AchievementCategory = exports.$Enums.AchievementCategory = {
-  TRIP_COUNT: 'TRIP_COUNT',
-  COUNTRY_COUNT: 'COUNTRY_COUNT',
-  TEMPLATE_PUBLISH_COUNT: 'TEMPLATE_PUBLISH_COUNT',
-  TEMPLATE_USE_COUNT: 'TEMPLATE_USE_COUNT',
-  COMPLETED_TRIP_COUNT: 'COMPLETED_TRIP_COUNT',
-  MEMBER_TRIP_COUNT: 'MEMBER_TRIP_COUNT',
-  SOCIAL: 'SOCIAL',
-  SPECIAL: 'SPECIAL'
-};
-
-exports.AchievementConditionType = exports.$Enums.AchievementConditionType = {
-  TOTAL_TRIPS_CREATED: 'TOTAL_TRIPS_CREATED',
-  TOTAL_TRIPS_COMPLETED: 'TOTAL_TRIPS_COMPLETED',
-  TOTAL_COUNTRIES_VISITED: 'TOTAL_COUNTRIES_VISITED',
-  TOTAL_TEMPLATES_PUBLISHED: 'TOTAL_TEMPLATES_PUBLISHED',
-  TOTAL_TEMPLATE_USES: 'TOTAL_TEMPLATE_USES',
-  TOTAL_PUBLIC_TRIPS_SHARED: 'TOTAL_PUBLIC_TRIPS_SHARED',
-  TOTAL_JOINED_TRIPS: 'TOTAL_JOINED_TRIPS'
-};
-
-exports.NotificationType = exports.$Enums.NotificationType = {
-  TRIP_INVITATION_RECEIVED: 'TRIP_INVITATION_RECEIVED',
-  TRIP_INVITATION_ACCEPTED: 'TRIP_INVITATION_ACCEPTED',
-  TRIP_INVITATION_DECLINED: 'TRIP_INVITATION_DECLINED',
-  TRIP_MEMBER_JOINED: 'TRIP_MEMBER_JOINED',
-  TRIP_MEMBER_REMOVED: 'TRIP_MEMBER_REMOVED',
-  TRIP_UPDATED: 'TRIP_UPDATED',
-  ITINERARY_REMINDER: 'ITINERARY_REMINDER',
-  TRIP_STARTED: 'TRIP_STARTED',
-  TRIP_ENDED: 'TRIP_ENDED',
-  TEMPLATE_PUBLISHED: 'TEMPLATE_PUBLISHED',
-  ACHIEVEMENT_UNLOCKED: 'ACHIEVEMENT_UNLOCKED',
-  SYSTEM: 'SYSTEM'
-};
-
-exports.NotificationChannel = exports.$Enums.NotificationChannel = {
-  IN_APP: 'IN_APP',
-  WEB_PUSH: 'WEB_PUSH'
-};
-
-exports.NotificationDeliveryStatus = exports.$Enums.NotificationDeliveryStatus = {
-  PENDING: 'PENDING',
-  SENT: 'SENT',
-  FAILED: 'FAILED',
-  SKIPPED: 'SKIPPED'
-};
-
-exports.ReminderType = exports.$Enums.ReminderType = {
-  TRIP_START: 'TRIP_START',
-  TRIP_END: 'TRIP_END',
-  ITINERARY_START: 'ITINERARY_START',
-  ITINERARY_CUSTOM: 'ITINERARY_CUSTOM'
-};
-
-exports.ReminderStatus = exports.$Enums.ReminderStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  SENT: 'SENT',
-  FAILED: 'FAILED',
-  CANCELLED: 'CANCELLED',
-  EXPIRED: 'EXPIRED'
-};
-
 exports.Prisma.ModelName = {
   User: 'User',
   Trip: 'Trip',
@@ -545,20 +274,7 @@ exports.Prisma.ModelName = {
   TripDay: 'TripDay',
   ItineraryItem: 'ItineraryItem',
   TripInvitation: 'TripInvitation',
-  PublicTemplate: 'PublicTemplate',
-  TemplateDay: 'TemplateDay',
-  TemplateItem: 'TemplateItem',
-  Rating: 'Rating',
-  AchievementDefinition: 'AchievementDefinition',
-  UserAchievementProgress: 'UserAchievementProgress',
-  UserAchievement: 'UserAchievement',
-  Notification: 'Notification',
-  NotificationDelivery: 'NotificationDelivery',
-  PushSubscription: 'PushSubscription',
-  ScheduledReminder: 'ScheduledReminder',
-  TripCountryVisit: 'TripCountryVisit',
-  TemplateCloneEvent: 'TemplateCloneEvent',
-  TripActivityLog: 'TripActivityLog'
+  Rating: 'Rating'
 };
 
 /**

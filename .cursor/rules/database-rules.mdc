@@ -1,0 +1,336 @@
+---
+alwaysApply: true
+---
+# Tripify Database Business Rules
+
+## Purpose
+
+Define the business rules that must be respected when reading and writing data in the database.
+
+This document is focused on system behavior, not UI behavior.
+
+---
+
+# Core Entities
+
+## User
+Represents an authenticated application user.
+
+### Rules
+- A user is identified internally by `id`.
+- A user is linked to Supabase auth by `supabaseAuthId`.
+- `email` must be unique.
+- `supabaseAuthId` must be unique.
+- `provider` is `GOOGLE`.
+- User record is created or updated after successful auth verification.
+
+---
+
+## Trip
+Represents a travel plan created by a user.
+
+### Rules
+- A trip has exactly one owner.
+- `ownerId` must reference an existing user.
+- `title` is required.
+- `destination` is required.
+- `travelerCount` must be at least 1.
+- `startDate` must be before or equal to `endDate`.
+- `timezone` defaults to `Asia/Bangkok`.
+- A trip may be published as a template using `isTemplatePublished`.
+
+### Status rules
+Allowed statuses:
+- `DRAFT`
+- `ACTIVE`
+- `COMPLETED`
+- `ENDED_EARLY`
+- `ARCHIVED`
+- `CANCELLED`
+
+### Trip completion rules
+- Only owner can change a trip to `COMPLETED` or `ENDED_EARLY`.
+- When trip is ended:
+  - `status` must be updated
+  - `endedAt` must be set
+
+---
+
+## TripMember
+Represents membership of a user in a trip.
+
+### Rules
+- A user can appear only once per trip.
+- `(tripId, userId)` must be unique.
+- The owner must also exist in `TripMember`.
+- Valid roles:
+  - `OWNER`
+  - `MEMBER`
+
+### Membership creation rules
+- When a trip is created:
+  - create owner membership automatically
+- When invitation is accepted:
+  - create member if not already exists
+
+---
+
+## TripDay
+Represents one day inside a trip.
+
+### Rules
+- A trip day belongs to one trip.
+- `(tripId, dayNumber)` must be unique.
+- `dayNumber` starts from 1 and increments by 1.
+- Days should represent the full trip date range from `startDate` to `endDate`.
+
+### Creation rules
+- Trip days are generated automatically when a trip is created.
+- Day generation must include both start and end date.
+
+---
+
+## ItineraryItem
+Represents a planned activity inside a trip day.
+
+### Rules
+- An itinerary item belongs to one trip day.
+- `title` is required.
+- `sortOrder` is used for ordering inside the day.
+- `estimatedCost` must be non-negative if provided.
+- `isCompleted` defaults to `false`.
+
+### Ownership / access rules
+- A user can create/update/delete itinerary items only if they are part of the trip.
+
+---
+
+## TripInvitation
+Represents an invitation to join a trip.
+
+### Rules
+- An invitation belongs to one trip.
+- An invitation has exactly one inviter.
+- An invitation may target:
+  - `inviteeUserId`
+  - or `inviteeEmail`
+- At least one of those two fields must be present.
+
+### Status rules
+Allowed statuses:
+- `PENDING`
+- `ACCEPTED`
+- `DECLINED`
+- `EXPIRED`
+- `REVOKED`
+- `CANCELLED`
+
+### Invitation creation rules
+- Only trip owner can create invitation.
+- Invitation starts with `PENDING`.
+
+### Invitation acceptance rules
+- Only intended invitee can accept invitation.
+- Invitation must still be `PENDING`.
+- On acceptance:
+  - set status to `ACCEPTED`
+  - set `respondedAt`
+  - create `TripMember` if not already exists
+
+### Invitation decline rules
+- Only intended invitee can decline invitation.
+- Invitation must still be `PENDING`.
+- On decline:
+  - set status to `DECLINED`
+  - set `respondedAt`
+
+---
+
+## Rating
+Represents a rating for a completed trip.
+
+### Rules
+- A rating belongs to one user and one trip.
+- `(userId, tripId)` must be unique.
+- `score` must be between 1 and 5.
+- `comment` is optional.
+
+### Rating creation rules
+- User must be a member of the trip.
+- Trip must have status:
+  - `COMPLETED`
+  - or `ENDED_EARLY`
+- A user can rate a trip only once.
+
+---
+
+# Template Rules
+
+## Simple Template Model
+A template is not a separate entity.
+A template is a normal trip where:
+
+- `isTemplatePublished = true`
+
+Optional supporting fields:
+- `templatePublishedAt`
+- `templateUseCount`
+
+### Publishing rules
+- Only trip owner can publish a trip as a template.
+- Publishing sets:
+  - `isTemplatePublished = true`
+  - `templatePublishedAt = now()`
+
+### Listing rules
+- Templates are queried from trips where `isTemplatePublished = true`.
+
+### Clone rules
+Cloning a template creates a new trip.
+
+The new trip must:
+- have current user as owner
+- create owner membership
+- copy trip basic information
+- copy trip days
+- copy itinerary items
+
+The new trip must NOT copy:
+- members
+- invitations
+- ratings
+
+After successful clone:
+- increment `templateUseCount` on source trip
+
+---
+
+# Auth Rules
+
+## User sync rules
+After backend verifies Supabase token:
+- find local user by `supabaseAuthId`
+- update if exists
+- create if not exists
+
+### Synced fields
+- `supabaseAuthId`
+- `email`
+- `fullName`
+- `avatarUrl`
+- `providerSubject`
+
+---
+
+# Access Control Rules
+
+## Trip Access
+A user can access trip detail only if:
+- they are the owner
+- or they are a trip member
+
+## Trip Mutation
+Only trip owner can:
+- update trip basic info
+- end trip
+- publish template
+- create invitations
+
+## Itinerary Access
+Trip owner and trip members can:
+- read trip days
+- read itinerary items
+- create/update/delete itinerary items
+
+## Rating Access
+Trip owner and trip members can:
+- read ratings
+
+Trip members can create rating only after trip ended.
+
+---
+
+# Query Ordering Rules
+
+## Trip detail
+- order days by `dayNumber asc`
+- order itinerary items by `sortOrder asc`
+
+## Invitations
+- newest first by `createdAt desc`
+
+## Ratings
+- newest first by `createdAt desc`
+
+## Templates
+Suggested default ordering:
+- newest published first
+- or highest `templateUseCount` first
+
+---
+
+# Deletion / Cascade Rules
+
+## Trip deletion
+If trip deletion is supported, it should cascade to:
+- trip members
+- trip days
+- itinerary items
+- invitations
+- ratings
+
+## Trip day deletion
+If trip day deletion is supported, it should cascade to itinerary items.
+
+## User deletion
+If user deletion is ever supported later, review cascade behavior carefully.
+For current scope, user deletion does not need to be implemented.
+
+---
+
+# Date and Time Rules
+
+## System timezone
+- Default business timezone: `Asia/Bangkok`
+
+## Storage rule
+- Store dates/times as UTC-compatible database values
+- Convert to display timezone on frontend
+
+## Trip day generation
+- Trip days should be generated from date boundaries
+- Day count should match date span inclusively
+
+---
+
+# Required Integrity Guarantees
+
+## Unique constraints
+- `User.supabaseAuthId`
+- `User.email`
+- `TripMember(tripId, userId)`
+- `Rating(userId, tripId)`
+
+## Required foreign key consistency
+- every `Trip.ownerId` must point to `User`
+- every `TripDay.tripId` must point to `Trip`
+- every `ItineraryItem.tripDayId` must point to `TripDay`
+- every `TripInvitation.tripId` must point to `Trip`
+- every `TripInvitation.inviterId` must point to `User`
+- every `Rating.tripId` must point to `Trip`
+- every `Rating.userId` must point to `User`
+
+---
+
+# Domain Invariants
+
+These must always remain true:
+
+1. Every trip has exactly one owner.
+2. Every owner must also appear in `TripMember`.
+3. A user cannot appear twice in the same trip membership list.
+4. A user cannot rate the same trip twice.
+5. A template is always just a trip with `isTemplatePublished = true`.
+6. Cloning a template creates a new independent trip.
+7. Invitations do not directly create membership until accepted.
+8. Completed or ended-early trips are the only trips that can be rated.

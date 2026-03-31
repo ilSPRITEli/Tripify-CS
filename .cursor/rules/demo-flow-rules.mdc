@@ -1,0 +1,335 @@
+---
+alwaysApply: true
+---
+
+# Tripify Demo Flow Script
+
+## Purpose
+
+This document defines the recommended product demo flow for Tripify.
+
+It is designed for presentations, walkthroughs, and product explanation.
+
+---
+
+# Demo Goal
+
+Show that Tripify helps users:
+
+- sign in easily
+- create a trip
+- plan a trip day by day
+- invite friends into the trip
+- end the trip
+- rate the trip
+- publish the trip as a reusable template
+- clone a template into a new trip
+
+---
+
+# Demo Story
+
+## Main Narrative
+
+Tripify is a collaborative trip planning platform that helps users create organized travel plans, invite other people into those plans, and turn successful trips into reusable templates for future travel.
+
+---
+
+# Demo Flow Overview
+
+1. Sign in with Google
+2. View current user state
+3. Create a new trip
+4. Show auto-generated trip days
+5. Add itinerary items
+6. Invite another user
+7. Show invitation handling
+8. Show trip members
+9. End the trip
+10. Submit a rating
+11. Publish trip as template
+12. Browse templates
+13. Clone template into a new trip
+
+---
+
+# Detailed Demo Script
+
+## Step 1: Landing Page
+
+### What to show
+- branding
+- travel-focused design
+- value proposition
+- sign in CTA
+
+### What to say
+Tripify is a collaborative travel planner designed for people who want to organize trips clearly, share plans with others, and reuse good trip plans as future templates.
+
+---
+
+## Step 2: Sign in with Google
+
+### What to show
+- login page or login button
+- Google sign-in flow
+
+### What to say
+Users can log in using Google immediately without needing a separate email/password registration flow.
+
+---
+
+## Step 3: Authenticated State
+
+### What to show
+- current user info in navbar or profile area
+- trip dashboard / my trips page
+
+### What to say
+Once signed in, the system syncs the user into the application and loads their trip workspace.
+
+---
+
+## Step 4: Create Trip
+
+### What to show
+- create trip form
+- fields:
+  - title
+  - destination
+  - date range
+  - traveler count
+  - budget
+  - description
+
+### Example demo data
+- title: `Japan Spring Trip`
+- destination: `Tokyo`
+- date range: `2026-04-10` to `2026-04-14`
+- traveler count: `2`
+- budget: `45000`
+
+### What to say
+Users can define the trip at a high level first, then the system creates the structure they need to start planning.
+
+---
+
+## Step 5: Show Generated Trip Days
+
+### What to show
+- trip detail page
+- day sections automatically created
+- `Day 1` to `Day N`
+
+### What to say
+The app automatically generates trip days based on the selected travel range, so the user can immediately start planning by day.
+
+---
+
+## Step 6: Add Itinerary Items
+
+### What to show
+- add itinerary item to one or more days
+- inputs:
+  - title
+  - place
+  - time
+  - estimated cost
+  - note
+
+### Example demo items
+#### Day 1
+- Visit Shibuya
+- Dinner at local restaurant
+
+#### Day 2
+- Tokyo Disneyland
+
+### What to say
+Each day can contain structured itinerary items, making the trip easier to read, organize, and share with others.
+
+---
+
+## Step 7: Invite Another User
+
+### What to show
+- invitation UI
+- invite by email or user
+- send invitation action
+
+### What to say
+One of the core collaboration features is the ability to invite another user into the same trip so they can participate in planning and viewing the trip together.
+
+---
+
+## Step 8: Invitation Acceptance
+
+### What to show
+- switch to invited account if available
+- invitations page
+- accept invitation action
+
+### What to say
+The invited user receives the trip invitation and can explicitly accept or decline it.
+
+### Then show
+- return to trip detail
+- members list now includes both users
+
+### What to say
+Once accepted, the invited person becomes part of the trip and appears in the trip members list.
+
+---
+
+## Step 9: Show Members
+
+### What to show
+- trip members panel
+- owner + accepted member
+
+### What to say
+This makes the trip collaborative while still keeping ownership and trip structure clear.
+
+---
+
+## Step 10: End the Trip
+
+### What to show
+- end trip action
+- choose completed or ended early
+- status updates on trip
+
+### What to say
+At the end of the trip, the owner can close out the trip, which also unlocks post-trip actions such as rating.
+
+---
+
+## Step 11: Submit Rating
+
+### What to show
+- rating modal or form
+- score 1–5
+- optional comment
+- submitted rating appears in ratings list
+
+### Example demo rating
+- score: `5`
+- comment: `The plan was easy to follow and very useful.`
+
+### What to say
+After a trip has ended, participants can rate it. This creates a post-trip feedback loop and adds value to successful trip planning.
+
+---
+
+## Step 12: Publish as Template
+
+### What to show
+- publish template button
+- published state visible on trip
+
+### What to say
+If a trip plan is successful, the owner can publish that trip as a reusable template.
+
+---
+
+## Step 13: Browse Templates
+
+### What to show
+- templates page
+- list of published templates
+- selected template card
+
+### What to say
+Published trips can be discovered and reused as starting points for future trips.
+
+---
+
+## Step 14: Clone Template
+
+### What to show
+- open template detail
+- clone template form
+- new title
+- new date range
+- create new trip from template
+
+### What to say
+Instead of planning every trip from scratch, users can reuse an existing template and create a new trip with its own dates and ownership.
+
+---
+
+## Step 15: Show New Cloned Trip
+
+### What to show
+- newly created trip detail page
+- copied day structure
+- copied itinerary items
+- clean ownership for current user
+
+### What to say
+The cloned trip is now a separate independent trip based on the original template.
+
+---
+
+# Recommended Demo Data
+
+## User A
+- Owner account
+- Creates trip
+- Publishes template
+
+## User B
+- Invited account
+- Accepts invitation
+- Rates trip
+
+## Example Trip
+- `Japan Spring Trip`
+- Tokyo
+- 5 days
+- 2 travelers
+- budget 45000
+
+## Example Items
+- Shibuya
+- Asakusa
+- Disneyland
+- Akihabara
+- Ueno
+
+---
+
+# Demo Success Criteria
+
+The demo is successful if it clearly shows:
+
+1. User authentication
+2. Trip creation
+3. Structured itinerary planning
+4. Invitation workflow
+5. Shared trip membership
+6. Post-trip rating
+7. Template publishing
+8. Template cloning
+
+---
+
+# Presentation Emphasis
+
+## Product Value to emphasize
+- collaborative planning
+- structured day-by-day organization
+- reusable trip knowledge through templates
+- post-trip feedback through ratings
+
+## UX Value to emphasize
+- easy to start
+- clear organization
+- visually easy to understand
+- suitable for real travel scenarios
+
+---
+
+# Suggested Short Pitch
+
+Tripify is a collaborative trip planning platform that helps users create organized travel plans, invite others into those plans, collect post-trip feedback, and turn successful trips into reusable templates for future travel.

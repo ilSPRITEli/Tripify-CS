@@ -1,0 +1,140 @@
+---
+alwaysApply: true
+---
+
+# Project Context: Tripify
+
+## Overview
+Tripify is a travel planning web application built as a monorepo.
+
+The main goal of this project is to create a demo-ready product within a very short timeline, so the implementation should prioritize speed, stability, and demo value over perfect architecture.
+
+## Tech Stack
+- Monorepo: Turborepo
+- Package manager/runtime: Bun
+- Frontend: React + Vite
+- Backend: Elysia
+- End-to-end typed API client: Eden Treaty
+- ORM: Prisma
+- Database/Auth/Storage: Supabase
+- Deploy: Vercel
+- Authentication: Google OAuth only
+- Timezone: Asia/Bangkok (UTC+7)
+
+## Important Technical Decisions
+- The frontend and backend are deployed separately on Vercel.
+- `apps/web` and `apps/api` are separate Vercel projects.
+- Prisma currently works reliably in this project using `prisma-client-js`.
+- Do not switch back to the new Prisma 7 generator flow for now if it risks deployment stability.
+- Prioritize code that works on Vercel over ideal but risky architecture changes.
+- Avoid unnecessary refactors during the demo phase.
+
+## Architecture Direction
+- `apps/web` is a React + Vite frontend.
+- `apps/api` is an Elysia backend.
+- The frontend calls the backend through Eden Treaty.
+- The backend is the only place that talks to Prisma/database.
+- The frontend must not use Prisma directly.
+- Shared types should be introduced only when they are truly needed.
+
+## Scope Strategy
+This is a reduced-scope demo version. The focus is on building a strong product demo quickly.
+
+### Core features to keep
+- Google login
+- Create trip
+- View my trips
+- View trip details
+- Day-by-day itinerary management
+- Invite users to join a trip
+- Accept / decline invitations
+- End trip
+- Rate trip after completion
+- Publish a trip as a simple template
+- Browse published templates
+- Clone a template into a new trip
+
+### Features intentionally cut for now
+- Notifications
+- Web push
+- Cron/reminder system
+- Achievement system
+- Public profile
+- Advanced analytics
+- Advanced roles/permissions
+- Dedicated template tables
+- Complex template versioning
+
+## Product Rules
+- A template is just a normal trip with `isTemplatePublished = true`.
+- Do not create separate `Template`, `TemplateDay`, or `TemplateItem` tables.
+- Cloning a template means copying:
+  - trip basic information
+  - trip days
+  - itinerary items
+- Cloning a template must NOT copy:
+  - members
+  - invitations
+  - ratings
+- Invitation flow should stay simple:
+  - one owner creates a trip
+  - owner invites another user
+  - invited user can accept or decline
+  - accepted invitation creates a trip membership
+- Rating flow should stay simple:
+  - only after trip is completed
+  - 1 user can rate a trip once
+  - score 1–5
+  - optional comment
+
+## Simplicity Rules
+- Prefer simpler schema over idealized schema.
+- Prefer fewer tables if the same behavior can be achieved safely.
+- Prefer fewer routes if the demo value stays intact.
+- Avoid premature abstractions.
+- Avoid overengineering shared packages until actual reuse is clear.
+- Keep business logic straightforward and easy to demo.
+
+## Backend Rules
+- Keep the Elysia app structure simple.
+- Favor stable deployment behavior over theoretical best practices.
+- Avoid circular imports.
+- Keep local imports explicit and consistent.
+- Use `/health` and `/db-check` for debugging environment/runtime issues.
+
+## Frontend Rules
+- Focus on polished UX/UI and a clear demo flow.
+- Core screens should be:
+  - Landing
+  - Login
+  - My Trips
+  - Create Trip
+  - Trip Detail
+  - Invitations
+  - Templates
+  - Rate Trip
+- Use Lottie animation meaningfully, especially in:
+  - landing hero
+  - empty states
+  - success states
+- Primary brand color direction:
+  - purple
+  - yellow/gold accent
+
+## Priority Order
+If implementation time is limited, prioritize in this order:
+1. Auth
+2. Trip CRUD
+3. Itinerary
+4. Invitation flow
+5. End trip
+6. Rating
+7. Template publish/clone
+8. UI polish
+
+## What not to do right now
+- Do not re-expand the project scope.
+- Do not introduce advanced template architecture.
+- Do not add achievement logic.
+- Do not add notification infrastructure.
+- Do not redesign the database around future features not needed for the demo.
