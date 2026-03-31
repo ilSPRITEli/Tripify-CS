@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "react-hot-toast";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import AppLayout from "./components/AppLayout";
 import { TooltipProvider } from "./components/ui/tooltip";
 import "./index.css";
 import AuthCallback from "./pages/AuthCallback";
@@ -9,6 +10,7 @@ import CreateTrip from "./pages/CreateTrip";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import TripDetail from "./pages/TripDetail";
+import TripList from "./pages/TripList";
 
 const router = createBrowserRouter([
   {
@@ -16,20 +18,25 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: "/login",
-    element: <Home />,
-  },
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
-  },
-  {
-    path: "/trips/create",
-    element: <CreateTrip />,
-  },
-  {
-    path: "/trips/:tripId",
-    element: <TripDetail />,
+    element: <AppLayout />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "/trips/create",
+        element: <CreateTrip />,
+      },
+      {
+        path: "/trips",
+        element: <TripList />,
+      },
+      {
+        path: "/trips/:tripId",
+        element: <TripDetail />,
+      },
+    ],
   },
   {
     path: "/auth/callback",

@@ -124,7 +124,7 @@ export default function CreateTrip() {
     <div className="min-h-screen bg-linear-to-br from-background via-muted/20 to-background px-4 py-10">
       <div className="mx-auto w-full max-w-lg">
         <Link
-          to="/dashboard"
+          to="/trips"
           className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-2 text-sm"
         >
           <ArrowLeft className="h-4 w-4" />

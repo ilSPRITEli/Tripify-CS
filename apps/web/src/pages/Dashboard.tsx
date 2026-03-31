@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { LogOut, Plus, User } from "lucide-react";
+import { LayoutGrid, LogOut, Plus, User } from "lucide-react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -74,6 +74,12 @@ export default function Dashboard() {
               Your account
             </CardTitle>
             <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant="outline" asChild>
+                <Link to="/trips">
+                  <LayoutGrid className="h-4 w-4" />
+                  My trips
+                </Link>
+              </Button>
               <Button type="button" size="sm" className="gap-2" asChild>
                 <Link to="/trips/create">
                   <Plus className="h-4 w-4" />

@@ -1,8 +1,8 @@
-import type { CreateTripResponseDto } from "@repo/shared";
-import { createTripSchema } from "@repo/shared";
+import type { CreateTripResponseDto, TripStatus } from "@repo/shared";
+import { TRIP_STATUS, createTripSchema } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
-import { createTrip, getTripById } from "../services/trip.service";
+import { createTrip, getMyTrips, getTripById } from "../services/trip.service";
 
 export const tripsRoutes = new Elysia({
   name: "trips-routes",
@@ -31,6 +31,36 @@ export const tripsRoutes = new Elysia({
       title: created.title,
       status: created.status as CreateTripResponseDto["status"],
     };
+
+    return { ok: true, data };
+  })
+  .get("/", async ({ query, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const statusRaw = query.status;
+    let status: TripStatus | undefined;
+    if (
+      typeof statusRaw === "string" &&
+      (TRIP_STATUS as readonly string[]).includes(statusRaw)
+    ) {
+      status = statusRaw as TripStatus;
+    }
+
+    const pub = query.isTemplatePublished;
+    let isTemplatePublished: boolean | undefined;
+    if (pub === "true") {
+      isTemplatePublished = true;
+    } else if (pub === "false") {
+      isTemplatePublished = false;
+    }
+
+    const data = await getMyTrips(currentUser.id, {
+      ...(status ? { status } : {}),
+      ...(isTemplatePublished !== undefined ? { isTemplatePublished } : {}),
+    });
 
     return { ok: true, data };
   })

@@ -34,6 +34,21 @@ export type CreateTripResponseDto = {
   status: TripStatus;
 };
 
+export type TripListItemDto = {
+  id: string;
+  title: string;
+  destination: string;
+  destinationCountry: string | null;
+  startDate: string;
+  endDate: string;
+  status: TripStatus;
+  isTemplatePublished: boolean;
+  owner: {
+    id: string;
+    fullName: string;
+  };
+};
+
 export type TripMemberDto = {
   id: string;
   userId: string;
