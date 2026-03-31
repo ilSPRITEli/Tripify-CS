@@ -1,7 +1,7 @@
 import { bearer } from "@elysiajs/bearer";
 import { Elysia } from "elysia";
-import { prisma } from "../lib/prisma";
 import { supabase } from "../lib/supabase";
+import { upsertAuthUser } from "../services/auth.service";
 
 export const authPlugin = new Elysia({ name: "auth" })
   .use(bearer())
@@ -19,37 +19,7 @@ export const authPlugin = new Elysia({ name: "auth" })
 
     const authUser = data.user;
 
-    const currentUser = await prisma.user.upsert({
-      where: {
-        supabaseAuthId: authUser.id,
-      },
-      update: {
-        email: authUser.email ?? "",
-        fullName:
-          authUser.user_metadata?.full_name ??
-          authUser.user_metadata?.name ??
-          "Unknown User",
-        avatarUrl:
-          authUser.user_metadata?.avatar_url ??
-          authUser.user_metadata?.picture ??
-          null,
-        providerSubject: authUser.user_metadata?.sub ?? null,
-      },
-      create: {
-        supabaseAuthId: authUser.id,
-        email: authUser.email ?? "",
-        fullName:
-          authUser.user_metadata?.full_name ??
-          authUser.user_metadata?.name ??
-          "Unknown User",
-        avatarUrl:
-          authUser.user_metadata?.avatar_url ??
-          authUser.user_metadata?.picture ??
-          null,
-        provider: "GOOGLE",
-        providerSubject: authUser.user_metadata?.sub ?? null,
-      },
-    });
+    const currentUser = await upsertAuthUser(authUser);
 
     return { currentUser, authUser };
   });

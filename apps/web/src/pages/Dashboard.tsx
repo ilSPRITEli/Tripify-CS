@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AuthMeDto } from "@repo/shared";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,19 +9,10 @@ import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { LogOut, User } from "lucide-react";
 
-type MeData = {
-  id: string;
-  email: string;
-  fullName: string;
-  avatarUrl: string | null;
-  username: string | null;
-  supabaseAuthId: string;
-};
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [me, setMe] = useState<MeData | null>(null);
+  const [me, setMe] = useState<AuthMeDto | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,6 +101,20 @@ export default function Dashboard() {
                       Username
                     </dt>
                     <dd className="text-foreground mt-0.5">{me.username}</dd>
+                  </div>
+                ) : null}
+                {me.bio ? (
+                  <div>
+                    <dt className="text-muted-foreground font-medium">Bio</dt>
+                    <dd className="text-foreground mt-0.5">{me.bio}</dd>
+                  </div>
+                ) : null}
+                {me.country ? (
+                  <div>
+                    <dt className="text-muted-foreground font-medium">
+                      Country
+                    </dt>
+                    <dd className="text-foreground mt-0.5">{me.country}</dd>
                   </div>
                 ) : null}
                 <div>

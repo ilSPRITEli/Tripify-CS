@@ -1,0 +1,10 @@
+{
+  "extends": "../typescript-config/base.json",
+   "compilerOptions": {
+    "noEmit": true,
+    "outDir": "dist",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src"]
+}

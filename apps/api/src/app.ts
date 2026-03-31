@@ -1,3 +1,4 @@
+import type { AuthMeDto } from "@repo/shared";
 import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { prisma } from "./lib/prisma";
@@ -45,17 +46,18 @@ const app = new Elysia()
       };
     }
 
-    return {
-      ok: true,
-      data: {
-        id: currentUser.id,
-        email: currentUser.email,
-        fullName: currentUser.fullName,
-        avatarUrl: currentUser.avatarUrl,
-        username: currentUser.username,
-        supabaseAuthId: currentUser.supabaseAuthId,
-      },
+    const data: AuthMeDto = {
+      id: currentUser.id,
+      supabaseAuthId: currentUser.supabaseAuthId,
+      email: currentUser.email,
+      fullName: currentUser.fullName,
+      avatarUrl: currentUser.avatarUrl,
+      username: currentUser.username,
+      bio: currentUser.bio,
+      country: currentUser.country,
     };
+
+    return { ok: true, data };
   });
 
 export default app;

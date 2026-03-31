@@ -16,6 +16,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@repo/shared": "workspace:*",
     "@elysiajs/bearer": "^1.4.3",
     "@elysiajs/cors": "^1.4.1",
     "@prisma/adapter-pg": "^7.6.0",
