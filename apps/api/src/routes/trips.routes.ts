@@ -1,4 +1,4 @@
-import { TRIP_STATUS, createTripSchema } from "@repo/shared";
+import type { CreateTripResponseDto, TripStatus } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
 
@@ -7,10 +7,12 @@ export const tripsRoutes = new Elysia({
   prefix: "/trips",
 })
   .use(authPlugin)
-  .get("/", () => ({
+  .get("/meta", () => ({
     ok: true,
-    TRIP_STATUS,
-    createTripSchema: createTripSchema,
+    types: {
+      TripStatus: null as unknown as TripStatus,
+      CreateTripResponseDto: null as unknown as CreateTripResponseDto,
+    },
   }));
 // .post("/", async ({ body, currentUser, set }) => {
 //   if (!currentUser) {
