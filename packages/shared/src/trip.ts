@@ -103,6 +103,9 @@ export type TripDetailDto = {
   status: TripStatus;
   endedAt: string | null;
   isTemplatePublished: boolean;
+  /** Present on `GET /templates/:tripId` responses */
+  templateUseCount?: number;
+  templatePublishedAt?: string | null;
   members: TripMemberDto[];
   days: TripDayDto[];
 };

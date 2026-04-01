@@ -5,8 +5,9 @@ import {
 } from "@repo/shared/trip";
 import type {
   CreateInvitationResponseDto,
-  EndTripResponseDto,
   CreateRatingResponseDto,
+  EndTripResponseDto,
+  PublishTemplateResponseDto,
 } from "@repo/shared";
 import { createInvitationSchema } from "@repo/shared/invitation-schema";
 import { createRatingSchema } from "@repo/shared/rating-schema";
@@ -18,6 +19,7 @@ import {
   getTripMembers,
 } from "../services/invitation.service";
 import { createRating, getTripRatings } from "../services/rating.service";
+import { publishTemplate } from "../services/template.service";
 import {
   createTrip,
   endTrip,
@@ -132,6 +134,24 @@ export const tripsRoutes = new Elysia({
         id: result.id,
         status: result.status,
       };
+      return { ok: true, data };
+    },
+  )
+  .post(
+    "/:tripId/publish-template",
+    async ({ params: { tripId }, currentUser, set }) => {
+      if (!currentUser) {
+        set.status = 401;
+        return { ok: false, message: "Unauthorized" };
+      }
+
+      const result = await publishTemplate(tripId, currentUser.id);
+      if (!result.ok) {
+        set.status = result.status;
+        return { ok: false, message: result.message };
+      }
+
+      const data: PublishTemplateResponseDto = result.data;
       return { ok: true, data };
     },
   )

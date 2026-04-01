@@ -11,7 +11,9 @@
     "./invitation": "./src/invitation.ts",
     "./invitation-schema": "./src/invitation-schema.ts",
     "./rating": "./src/rating.ts",
-    "./rating-schema": "./src/rating-schema.ts"
+    "./rating-schema": "./src/rating-schema.ts",
+    "./template": "./src/template.ts",
+    "./template-schema": "./src/template-schema.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

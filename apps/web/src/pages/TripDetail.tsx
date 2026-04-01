@@ -42,6 +42,7 @@ import {
   Crown,
   DollarSign,
   Flag,
+  LayoutTemplate,
   Loader2,
   Mail,
   MapPin,
@@ -865,6 +866,7 @@ export default function TripDetail() {
   const [ratingScore, setRatingScore] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
   const [ratingSaving, setRatingSaving] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
 
   const loadTrip = useCallback(async () => {
     if (!tripId) return;
@@ -1054,6 +1056,27 @@ export default function TripDetail() {
     await loadTrip();
   };
 
+  const submitPublish = async () => {
+    if (!tripId) return;
+    setPublishSaving(true);
+    const res = await api.trips({ tripId })["publish-template"].post({});
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not publish template"));
+      setPublishSaving(false);
+      return;
+    }
+    toast.success("Template published");
+    setPublishSaving(false);
+    await loadTrip();
+  };
+
   const submitInvite = async () => {
     if (!tripId) return;
     const email = inviteEmail.trim();
@@ -1149,19 +1172,35 @@ export default function TripDetail() {
                 ) : null}
               </div>
             </div>
-            {canEndTrip ? (
-              <Button
-                type="button"
-                variant="secondary"
-                className="border-primary-foreground/25 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 shrink-0 rounded-full"
-                onClick={() => {
-                  setEndChoice("COMPLETED");
-                  setEndDialogOpen(true);
-                }}
-              >
-                <Flag className="mr-2 h-4 w-4" />
-                End trip
-              </Button>
+            {(isOwner && !trip.isTemplatePublished) || canEndTrip ? (
+              <div className="flex flex-col gap-2 sm:flex-row sm:shrink-0">
+                {isOwner && !trip.isTemplatePublished ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="border-primary-foreground/25 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 rounded-full"
+                    disabled={publishSaving}
+                    onClick={() => void submitPublish()}
+                  >
+                    <LayoutTemplate className="mr-2 h-4 w-4" />
+                    {publishSaving ? "Publishing…" : "Publish template"}
+                  </Button>
+                ) : null}
+                {canEndTrip ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="border-primary-foreground/25 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 rounded-full"
+                    onClick={() => {
+                      setEndChoice("COMPLETED");
+                      setEndDialogOpen(true);
+                    }}
+                  >
+                    <Flag className="mr-2 h-4 w-4" />
+                    End trip
+                  </Button>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </div>

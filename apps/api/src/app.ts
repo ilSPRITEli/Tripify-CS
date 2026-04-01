@@ -4,6 +4,7 @@ import { prisma } from "./lib/prisma";
 import { authRoutes } from "./routes/auth.routes";
 import { invitationsRoutes } from "./routes/invitations.routes";
 import { itineraryRoutes } from "./routes/itinerary.routes";
+import { templatesRoutes } from "./routes/templates.routes";
 import { tripsRoutes } from "./routes/trips.routes";
 
 const app = new Elysia()
@@ -17,6 +18,7 @@ const app = new Elysia()
   .use(tripsRoutes)
   .use(itineraryRoutes)
   .use(invitationsRoutes)
+  .use(templatesRoutes)
   .get("/health", () => ({
     ok: true,
     message: "API is running",

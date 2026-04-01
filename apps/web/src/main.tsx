@@ -9,6 +9,7 @@ import AuthCallback from "./pages/AuthCallback";
 import CreateTrip from "./pages/CreateTrip";
 import Home from "./pages/Home";
 import Invitations from "./pages/Invitations";
+import TemplateDetail from "./pages/TemplateDetail";
 import Templates from "./pages/Templates";
 import TripDetail from "./pages/TripDetail";
 import TripList from "./pages/TripList";
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: "/templates",
         element: <Templates />,
+      },
+      {
+        path: "/templates/:tripId",
+        element: <TemplateDetail />,
       },
     ],
   },

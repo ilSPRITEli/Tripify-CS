@@ -13,19 +13,19 @@ import type {
 import { Prisma } from "../generated/prisma";
 import { prisma } from "../lib/prisma";
 
-function startOfUtcDay(d: Date): Date {
+export function startOfUtcDay(d: Date): Date {
   return new Date(
     Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
   );
 }
 
-function addUtcDays(d: Date, days: number): Date {
+export function addUtcDays(d: Date, days: number): Date {
   const next = new Date(d);
   next.setUTCDate(next.getUTCDate() + days);
   return next;
 }
 
-function buildTripDaysInclusive(startIso: string, endIso: string): Date[] {
+export function buildTripDaysInclusive(startIso: string, endIso: string): Date[] {
   const start = startOfUtcDay(new Date(startIso));
   const end = startOfUtcDay(new Date(endIso));
   const dates: Date[] = [];
@@ -95,7 +95,7 @@ export async function createTrip(
   };
 }
 
-function mapItineraryItem(row: {
+export function mapItineraryItem(row: {
   id: string;
   title: string;
   description: string | null;
@@ -130,7 +130,7 @@ function mapItineraryItem(row: {
   };
 }
 
-function mapTripDay(row: {
+export function mapTripDay(row: {
   id: string;
   dayNumber: number;
   date: Date;

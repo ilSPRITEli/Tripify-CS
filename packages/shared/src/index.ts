@@ -48,3 +48,9 @@ export type {
   CreateRatingResponseDto,
   RatingDto,
 } from "./rating";
+export { cloneTemplateSchema, type CloneTemplateInput } from "./template-schema";
+export type {
+  CloneTemplateDto,
+  PublishTemplateResponseDto,
+  TemplateListItemDto,
+} from "./template";

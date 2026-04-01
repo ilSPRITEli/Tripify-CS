@@ -1310,33 +1310,33 @@ Avoid:
 # Step 7: Simple Template Flow
 
 ## Backend
-- [ ] implement `POST /trips/:tripId/publish-template`
-- [ ] implement `GET /templates`
-- [ ] implement `GET /templates/:tripId`
-- [ ] implement `POST /templates/:tripId/clone`
+- [x] implement `POST /trips/:tripId/publish-template`
+- [x] implement `GET /templates`
+- [x] implement `GET /templates/:tripId`
+- [x] implement `POST /templates/:tripId/clone`
 
 ## Business rules
-- [ ] template = trip with `isTemplatePublished = true`
-- [ ] cloning copies:
+- [x] template = trip with `isTemplatePublished = true`
+- [x] cloning copies:
   - trip fields
   - trip days
   - itinerary items
-- [ ] cloning does NOT copy:
+- [x] cloning does NOT copy:
   - members
   - invitations
   - ratings
-- [ ] increment `templateUseCount`
+- [x] increment `templateUseCount`
 
 ## Frontend
-- [ ] publish template button
-- [ ] templates list page
-- [ ] template detail page
-- [ ] clone template action
+- [x] publish template button
+- [x] templates list page
+- [x] template detail page
+- [x] clone template action
 
 ## Done when
-- [ ] user can publish trip as template
-- [ ] other user can browse templates
-- [ ] other user can clone template into new trip
+- [x] user can publish trip as template
+- [x] other user can browse templates
+- [x] other user can clone template into new trip
 
 ---
 
@@ -1394,8 +1394,8 @@ Avoid:
 - [x] show both users in members list
 - [x] end trip
 - [x] submit rating
-- [ ] publish as template
-- [ ] clone template
+- [x] publish as template
+- [x] clone template
 
 ---
 
