@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./trip": "./src/trip.ts",
+    "./trip-schema": "./src/trip-schema.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
