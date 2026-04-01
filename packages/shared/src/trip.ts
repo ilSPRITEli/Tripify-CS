@@ -101,9 +101,16 @@ export type TripDetailDto = {
   endDate: string;
   timezone: string;
   status: TripStatus;
+  endedAt: string | null;
   isTemplatePublished: boolean;
   members: TripMemberDto[];
   days: TripDayDto[];
+};
+
+export type EndTripResponseDto = {
+  id: string;
+  status: TripStatus;
+  endedAt: string;
 };
 
 export type UpdateTripDayDto = {

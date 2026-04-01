@@ -20,3 +20,9 @@ export const createTripSchema = z
   });
 
 export type CreateTripInput = z.infer<typeof createTripSchema>;
+
+export const endTripSchema = z.object({
+  status: z.enum(["COMPLETED", "ENDED_EARLY"]),
+});
+
+export type EndTripInput = z.infer<typeof endTripSchema>;

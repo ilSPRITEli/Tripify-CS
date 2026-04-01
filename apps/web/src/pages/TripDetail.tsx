@@ -27,6 +27,7 @@ import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type {
   ItineraryItemDto,
+  RatingDto,
   TripDayDto,
   TripDetailDto,
   TripStatus,
@@ -40,10 +41,13 @@ import {
   Clock,
   Crown,
   DollarSign,
+  Flag,
+  Loader2,
   Mail,
   MapPin,
   Pencil,
   Plus,
+  Star,
   StickyNote,
   Trash2,
   Users,
@@ -852,6 +856,15 @@ export default function TripDetail() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteMessage, setInviteMessage] = useState("");
   const [inviteSaving, setInviteSaving] = useState(false);
+  const [ratings, setRatings] = useState<RatingDto[]>([]);
+  const [endDialogOpen, setEndDialogOpen] = useState(false);
+  const [endChoice, setEndChoice] = useState<"COMPLETED" | "ENDED_EARLY">(
+    "COMPLETED",
+  );
+  const [endSaving, setEndSaving] = useState(false);
+  const [ratingScore, setRatingScore] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [ratingSaving, setRatingSaving] = useState(false);
 
   const loadTrip = useCallback(async () => {
     if (!tripId) return;
@@ -881,8 +894,25 @@ export default function TripDetail() {
       } else {
         toast.error("Trip not found");
       }
+      setRatings([]);
     } else {
       setTrip(payload.data);
+
+      const rr = await api.trips({ tripId }).ratings.get();
+      const rp = rr.data;
+      if (
+        !rr.error &&
+        rp &&
+        typeof rp === "object" &&
+        "ok" in rp &&
+        rp.ok === true &&
+        "data" in rp &&
+        Array.isArray(rp.data)
+      ) {
+        setRatings(rp.data as RatingDto[]);
+      } else {
+        setRatings([]);
+      }
     }
 
     const meRes = await api.auth.me.get();
@@ -952,6 +982,78 @@ export default function TripDetail() {
       (m) => m.role === "OWNER" && m.userId === currentUserId,
     );
 
+  const isMember =
+    !!currentUserId &&
+    trip.members.some((m) => m.userId === currentUserId);
+
+  const canEndTrip =
+    isOwner &&
+    trip.status !== "COMPLETED" &&
+    trip.status !== "ENDED_EARLY";
+
+  const tripIsEndedForRating =
+    trip.status === "COMPLETED" || trip.status === "ENDED_EARLY";
+
+  const alreadyRated =
+    !!currentUserId &&
+    ratings.some((r) => r.user.id === currentUserId);
+
+  const canRate =
+    isMember && tripIsEndedForRating && !alreadyRated;
+
+  const submitEndTrip = async () => {
+    if (!tripId) return;
+    setEndSaving(true);
+    const res = await api.trips({ tripId }).end.post({ status: endChoice });
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not end trip"));
+      setEndSaving(false);
+      return;
+    }
+    toast.success(
+      endChoice === "COMPLETED" ? "Trip marked complete" : "Trip ended early",
+    );
+    setEndDialogOpen(false);
+    setEndSaving(false);
+    await loadTrip();
+  };
+
+  const submitRating = async () => {
+    if (!tripId || ratingScore < 1) {
+      toast.error("Choose a star rating");
+      return;
+    }
+    setRatingSaving(true);
+    const res = await api.trips({ tripId }).ratings.post({
+      score: ratingScore,
+      comment: ratingComment.trim() ? ratingComment.trim() : null,
+    });
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not submit rating"));
+      setRatingSaving(false);
+      return;
+    }
+    toast.success("Thanks for your rating!");
+    setRatingScore(0);
+    setRatingComment("");
+    setRatingSaving(false);
+    await loadTrip();
+  };
+
   const submitInvite = async () => {
     if (!tripId) return;
     const email = inviteEmail.trim();
@@ -1001,7 +1103,7 @@ export default function TripDetail() {
       >
         <div className="gradient-hero text-primary-foreground rounded-2xl p-8 shadow-elevated md:p-10">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 space-y-3">
+            <div className="min-w-0 flex-1 space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-primary-foreground ring-1 ring-white/25 backdrop-blur-sm">
                   {sc?.label ?? trip.status.replaceAll("_", " ")}
@@ -1039,8 +1141,28 @@ export default function TripDetail() {
                     {budgetLabel}
                   </span>
                 ) : null}
+                {trip.endedAt ? (
+                  <span className="flex items-center gap-1.5 opacity-95">
+                    <Flag className="h-4 w-4 shrink-0" />
+                    Ended {formatTripDayYmd(trip.endedAt)}
+                  </span>
+                ) : null}
               </div>
             </div>
+            {canEndTrip ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="border-primary-foreground/25 bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 shrink-0 rounded-full"
+                onClick={() => {
+                  setEndChoice("COMPLETED");
+                  setEndDialogOpen(true);
+                }}
+              >
+                <Flag className="mr-2 h-4 w-4" />
+                End trip
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -1067,6 +1189,124 @@ export default function TripDetail() {
                   />
                 ))}
               </div>
+            </div>
+
+            <div>
+              <h2 className="text-foreground mb-4 text-sm font-semibold tracking-wide uppercase">
+                Ratings
+              </h2>
+              {canRate ? (
+                <Card className="border-border/60 shadow-card mb-6 rounded-2xl">
+                  <CardContent className="space-y-4 p-5">
+                    <p className="text-foreground text-sm font-medium">
+                      Rate this trip
+                    </p>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setRatingScore(n)}
+                          className="rounded-md p-1 transition-colors"
+                          aria-label={`${n} stars`}
+                        >
+                          <Star
+                            className={cn(
+                              "h-8 w-8",
+                              ratingScore >= n
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground/40",
+                            )}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="rating-comment">Comment (optional)</Label>
+                      <Textarea
+                        id="rating-comment"
+                        value={ratingComment}
+                        onChange={(e) => setRatingComment(e.target.value)}
+                        rows={3}
+                        placeholder="How was the trip?"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      className="rounded-full"
+                      disabled={ratingScore < 1 || ratingSaving}
+                      onClick={() => void submitRating()}
+                    >
+                      {ratingSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting…
+                        </>
+                      ) : (
+                        "Submit rating"
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : tripIsEndedForRating && isMember && alreadyRated ? (
+                <p className="text-muted-foreground mb-6 text-sm">
+                  You have already rated this trip.
+                </p>
+              ) : tripIsEndedForRating && !isMember ? (
+                <p className="text-muted-foreground mb-6 text-sm">
+                  Only trip members can rate.
+                </p>
+              ) : !tripIsEndedForRating ? (
+                <p className="text-muted-foreground mb-6 text-sm">
+                  Ratings open after the trip is marked complete or ended early.
+                </p>
+              ) : null}
+
+              {ratings.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No ratings yet.
+                </p>
+              ) : (
+                <ul className="space-y-4">
+                  {ratings.map((r) => (
+                    <li
+                      key={r.id}
+                      className="border-border/80 shadow-card rounded-2xl border bg-card/70 p-5"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
+                            {r.user.fullName.slice(0, 1).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {r.user.fullName}
+                            </p>
+                            <div className="mt-0.5 flex gap-0.5">
+                              {Array.from({ length: 5 }, (_, i) => (
+                                <Star
+                                  key={i}
+                                  className={cn(
+                                    "h-3.5 w-3.5",
+                                    i < r.score
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-muted-foreground/30",
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {r.comment ? (
+                        <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                          {r.comment}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -1150,6 +1390,58 @@ export default function TripDetail() {
                 View all invitations
               </Link>
             </div>
+
+            <AlertDialog open={endDialogOpen} onOpenChange={setEndDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>End this trip?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This sets the trip status and records when it finished. You
+                    can mark it fully completed or ended early.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="flex flex-col gap-2 py-2 sm:flex-row">
+                  <Button
+                    type="button"
+                    variant={endChoice === "COMPLETED" ? "default" : "outline"}
+                    className="flex-1 rounded-full"
+                    onClick={() => setEndChoice("COMPLETED")}
+                  >
+                    Completed
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      endChoice === "ENDED_EARLY" ? "default" : "outline"
+                    }
+                    className="flex-1 rounded-full"
+                    onClick={() => setEndChoice("ENDED_EARLY")}
+                  >
+                    Ended early
+                  </Button>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={endSaving}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={endSaving}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      void submitEndTrip();
+                    }}
+                  >
+                    {endSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving…
+                      </>
+                    ) : (
+                      "Confirm"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
               <DialogContent>

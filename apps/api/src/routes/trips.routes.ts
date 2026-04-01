@@ -3,17 +3,24 @@ import {
   type CreateTripResponseDto,
   type TripStatus,
 } from "@repo/shared/trip";
-import type { CreateInvitationResponseDto } from "@repo/shared";
+import type {
+  CreateInvitationResponseDto,
+  EndTripResponseDto,
+  CreateRatingResponseDto,
+} from "@repo/shared";
 import { createInvitationSchema } from "@repo/shared/invitation-schema";
-import { createTripSchema } from "@repo/shared/trip-schema";
+import { createRatingSchema } from "@repo/shared/rating-schema";
+import { createTripSchema, endTripSchema } from "@repo/shared/trip-schema";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
 import {
   createInvitation,
   getTripMembers,
 } from "../services/invitation.service";
+import { createRating, getTripRatings } from "../services/rating.service";
 import {
   createTrip,
+  endTrip,
   getMyTrips,
   getTripById,
   getTripDays,
@@ -141,6 +148,74 @@ export const tripsRoutes = new Elysia({
     }
 
     return { ok: true, data: members };
+  })
+  .post("/:tripId/end", async ({ params: { tripId }, body, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const parsed = endTripSchema.safeParse(body);
+    if (!parsed.success) {
+      set.status = 400;
+      return {
+        ok: false,
+        message: "Validation failed",
+        errors: parsed.error.flatten().fieldErrors,
+      };
+    }
+
+    const result = await endTrip(tripId, currentUser.id, parsed.data.status);
+    if (!result.ok) {
+      set.status = result.status;
+      return { ok: false, message: result.message };
+    }
+
+    const data: EndTripResponseDto = {
+      id: result.id,
+      status: result.status,
+      endedAt: result.endedAt,
+    };
+    return { ok: true, data };
+  })
+  .get("/:tripId/ratings", async ({ params: { tripId }, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const list = await getTripRatings(tripId, currentUser.id);
+    if (list === null) {
+      set.status = 404;
+      return { ok: false, message: "Not found" };
+    }
+
+    return { ok: true, data: list };
+  })
+  .post("/:tripId/ratings", async ({ params: { tripId }, body, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const parsed = createRatingSchema.safeParse(body);
+    if (!parsed.success) {
+      set.status = 400;
+      return {
+        ok: false,
+        message: "Validation failed",
+        errors: parsed.error.flatten().fieldErrors,
+      };
+    }
+
+    const result = await createRating(tripId, currentUser.id, parsed.data);
+    if (!result.ok) {
+      set.status = result.status;
+      return { ok: false, message: result.message };
+    }
+
+    const data: CreateRatingResponseDto = result.data;
+    return { ok: true, data };
   })
   .get("/:tripId", async ({ params: { tripId }, currentUser, set }) => {
     if (!currentUser) {

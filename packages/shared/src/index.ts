@@ -1,6 +1,11 @@
 export type { ApiResponse } from "./api-response";
 export type { AuthMeDto, AuthMeResponse } from "./auth";
-export { createTripSchema, type CreateTripInput } from "./trip-schema";
+export {
+  createTripSchema,
+  endTripSchema,
+  type CreateTripInput,
+  type EndTripInput,
+} from "./trip-schema";
 export { TRIP_MEMBER_ROLE, TRIP_STATUS } from "./trip";
 export type {
   CreateItineraryItemDto,
@@ -9,6 +14,7 @@ export type {
   ItineraryItemDto,
   TripDayDto,
   TripDetailDto,
+  EndTripResponseDto,
   TripListItemDto,
   TripMemberDto,
   TripMemberRole,
@@ -36,3 +42,9 @@ export type {
   InvitationListItemDto,
   InvitationStatus,
 } from "./invitation";
+export { createRatingSchema, type CreateRatingInput } from "./rating-schema";
+export type {
+  CreateRatingDto,
+  CreateRatingResponseDto,
+  RatingDto,
+} from "./rating";

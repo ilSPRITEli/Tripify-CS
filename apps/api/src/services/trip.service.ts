@@ -246,6 +246,7 @@ export async function getTripById(
     endDate: trip.endDate.toISOString(),
     timezone: trip.timezone,
     status: trip.status as TripDetailDto["status"],
+    endedAt: trip.endedAt?.toISOString() ?? null,
     isTemplatePublished: trip.isTemplatePublished,
     members: trip.members.map(toTripMemberDto),
     days: trip.days.map((d) =>
@@ -438,4 +439,50 @@ export async function deleteItineraryItem(
   await prisma.itineraryItem.delete({ where: { id: itemId } });
 
   return { id: itemId };
+}
+
+type EndTripSuccess = {
+  ok: true;
+  id: string;
+  status: TripStatus;
+  endedAt: string;
+};
+
+type EndTripFail = { ok: false; status: number; message: string };
+
+export async function endTrip(
+  tripId: string,
+  ownerId: string,
+  status: "COMPLETED" | "ENDED_EARLY",
+): Promise<EndTripSuccess | EndTripFail> {
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    select: { id: true, ownerId: true, status: true },
+  });
+  if (!trip) {
+    return { ok: false, status: 404, message: "Not found" };
+  }
+  if (trip.ownerId !== ownerId) {
+    return { ok: false, status: 403, message: "Forbidden" };
+  }
+  if (trip.status === "COMPLETED" || trip.status === "ENDED_EARLY") {
+    return { ok: false, status: 400, message: "Trip already ended" };
+  }
+
+  const now = new Date();
+  const updated = await prisma.trip.update({
+    where: { id: tripId },
+    data: {
+      status,
+      endedAt: now,
+      endedByUserId: ownerId,
+    },
+  });
+
+  return {
+    ok: true,
+    id: updated.id,
+    status: updated.status as TripStatus,
+    endedAt: now.toISOString(),
+  };
 }

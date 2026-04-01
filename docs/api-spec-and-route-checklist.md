@@ -1266,44 +1266,44 @@ Avoid:
 # Step 5: End Trip
 
 ## Backend
-- [ ] implement `POST /trips/:tripId/end`
+- [x] implement `POST /trips/:tripId/end`
 
 ## Business rules
-- [ ] only owner can end trip
-- [ ] allow `COMPLETED` or `ENDED_EARLY`
-- [ ] set `endedAt`
+- [x] only owner can end trip
+- [x] allow `COMPLETED` or `ENDED_EARLY`
+- [x] set `endedAt`
 
 ## Frontend
-- [ ] end trip button
-- [ ] end trip confirmation
-- [ ] update status in UI
+- [x] end trip button
+- [x] end trip confirmation
+- [x] update status in UI
 
 ## Done when
-- [ ] owner can mark a trip as ended
+- [x] owner can mark a trip as ended
 
 ---
 
 # Step 6: Rating
 
 ## Backend
-- [ ] implement `POST /trips/:tripId/ratings`
-- [ ] implement `GET /trips/:tripId/ratings`
+- [x] implement `POST /trips/:tripId/ratings`
+- [x] implement `GET /trips/:tripId/ratings`
 
 ## Business rules
-- [ ] only members can rate
-- [ ] trip must be completed or ended early
-- [ ] one rating per user per trip
-- [ ] score range = 1..5
+- [x] only members can rate
+- [x] trip must be completed or ended early
+- [x] one rating per user per trip
+- [x] score range = 1..5
 
 ## Frontend
-- [ ] rating modal or page
-- [ ] star rating UI
-- [ ] optional comment field
-- [ ] rating list on trip detail
+- [x] rating modal or page
+- [x] star rating UI
+- [x] optional comment field
+- [x] rating list on trip detail
 
 ## Done when
-- [ ] member can rate completed trip
-- [ ] ratings are visible on trip detail
+- [x] member can rate completed trip
+- [x] ratings are visible on trip detail
 
 ---
 
@@ -1349,7 +1349,7 @@ Avoid:
 - [ ] `UpdateTripDto`
 - [x] `CreateItineraryItemDto`
 - [x] `CreateInvitationDto`
-- [ ] `CreateRatingDto`
+- [x] `CreateRatingDto`
 
 ## Rule
 - [x] do not overbuild shared package early
@@ -1367,7 +1367,7 @@ Avoid:
 - [x] Trip Detail page
 - [x] Invitations page
 - [x] Templates page
-- [ ] Rate Trip modal/page
+- [x] Rate Trip modal/page
 
 ## UX direction
 - [ ] clean modern UI
@@ -1392,8 +1392,8 @@ Avoid:
 - [x] invite another user
 - [x] accept invitation as second user
 - [x] show both users in members list
-- [ ] end trip
-- [ ] submit rating
+- [x] end trip
+- [x] submit rating
 - [ ] publish as template
 - [ ] clone template
 

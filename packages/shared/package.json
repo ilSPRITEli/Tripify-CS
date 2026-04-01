@@ -9,7 +9,9 @@
     "./trip-schema": "./src/trip-schema.ts",
     "./itinerary-schema": "./src/itinerary-schema.ts",
     "./invitation": "./src/invitation.ts",
-    "./invitation-schema": "./src/invitation-schema.ts"
+    "./invitation-schema": "./src/invitation-schema.ts",
+    "./rating": "./src/rating.ts",
+    "./rating-schema": "./src/rating-schema.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"
