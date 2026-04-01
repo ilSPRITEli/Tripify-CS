@@ -1,3 +1,4 @@
+import { TRIP_STATUS, createTripSchema } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
 
@@ -8,7 +9,8 @@ export const tripsRoutes = new Elysia({
   .use(authPlugin)
   .get("/", () => ({
     ok: true,
-    message: "API is running",
+    TRIP_STATUS,
+    createTripSchema: createTripSchema,
   }));
 // .post("/", async ({ body, currentUser, set }) => {
 //   if (!currentUser) {
