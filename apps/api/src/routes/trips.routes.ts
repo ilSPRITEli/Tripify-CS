@@ -2,7 +2,7 @@ import type { TripStatus } from "@repo/shared";
 import { TRIP_STATUS } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
-import { getMyTrips } from "../services/trip.service";
+import { getMyTrips } from "../services/test.service";
 
 export const tripsRoutes = new Elysia({
   name: "trips-routes",
