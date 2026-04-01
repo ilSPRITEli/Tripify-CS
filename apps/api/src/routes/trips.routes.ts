@@ -1,39 +1,39 @@
-import type { CreateTripResponseDto, TripStatus } from "@repo/shared";
-import { TRIP_STATUS, createTripSchema } from "@repo/shared";
+import type { TripStatus } from "@repo/shared";
+import { TRIP_STATUS } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
-import { createTrip, getMyTrips, getTripById } from "../services/trip.service";
+import { getMyTrips, getTripById } from "../services/trip.service";
 
 export const tripsRoutes = new Elysia({
   name: "trips-routes",
   prefix: "/trips",
 })
   .use(authPlugin)
-  .post("/", async ({ body, currentUser, set }) => {
-    if (!currentUser) {
-      set.status = 401;
-      return { ok: false, message: "Unauthorized" };
-    }
+  // .post("/", async ({ body, currentUser, set }) => {
+  //   if (!currentUser) {
+  //     set.status = 401;
+  //     return { ok: false, message: "Unauthorized" };
+  //   }
 
-    const parsed = createTripSchema.safeParse(body);
-    if (!parsed.success) {
-      set.status = 400;
-      return {
-        ok: false,
-        message: "Validation failed",
-        errors: parsed.error.flatten().fieldErrors,
-      };
-    }
+  //   const parsed = createTripSchema.safeParse(body);
+  //   if (!parsed.success) {
+  //     set.status = 400;
+  //     return {
+  //       ok: false,
+  //       message: "Validation failed",
+  //       errors: parsed.error.flatten().fieldErrors,
+  //     };
+  //   }
 
-    const created = await createTrip(currentUser.id, parsed.data);
-    const data: CreateTripResponseDto = {
-      id: created.id,
-      title: created.title,
-      status: created.status as CreateTripResponseDto["status"],
-    };
+  //   const created = await createTrip(currentUser.id, parsed.data);
+  //   const data: CreateTripResponseDto = {
+  //     id: created.id,
+  //     title: created.title,
+  //     status: created.status as CreateTripResponseDto["status"],
+  //   };
 
-    return { ok: true, data };
-  })
+  //   return { ok: true, data };
+  // })
   .get("/", async ({ query, currentUser, set }) => {
     if (!currentUser) {
       set.status = 401;

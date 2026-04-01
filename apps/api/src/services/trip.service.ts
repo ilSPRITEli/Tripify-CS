@@ -1,10 +1,10 @@
 import type {
   CreateTripDto,
-  TripDetailDto,
-  TripDayDto,
   ItineraryItemDto,
-  TripMemberDto,
+  TripDayDto,
+  TripDetailDto,
   TripListItemDto,
+  TripMemberDto,
   TripStatus,
 } from "@repo/shared";
 import { Prisma } from "../generated/prisma";
@@ -231,8 +231,7 @@ export async function getTripById(
     destination: trip.destination,
     destinationCountry: trip.destinationCountry,
     destinationCity: trip.destinationCity,
-    budgetTotal:
-      trip.budgetTotal !== null ? trip.budgetTotal.toNumber() : null,
+    budgetTotal: trip.budgetTotal !== null ? trip.budgetTotal.toNumber() : null,
     travelerCount: trip.travelerCount,
     startDate: trip.startDate.toISOString(),
     endDate: trip.endDate.toISOString(),
