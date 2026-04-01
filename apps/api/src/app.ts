@@ -1,6 +1,7 @@
 import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { prisma } from "./lib/prisma";
+import { authRoutes } from "./routes/auth.routes";
 
 const app = new Elysia()
   .use(
@@ -9,7 +10,7 @@ const app = new Elysia()
       methods: ["GET", "POST", "PUT", "DELETE"],
     }),
   )
-  // .use(authRoutes)
+  .use(authRoutes)
   // .use(tripsRoutes)
   .get("/health", () => ({
     ok: true,
