@@ -2,7 +2,7 @@ import type { TripStatus } from "@repo/shared";
 import { TRIP_STATUS } from "@repo/shared";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
-import { getMyTrips, getTripById } from "../services/trip.service";
+import { getMyTrips } from "../services/trip.service";
 
 export const tripsRoutes = new Elysia({
   name: "trips-routes",
@@ -63,18 +63,18 @@ export const tripsRoutes = new Elysia({
     });
 
     return { ok: true, data };
-  })
-  .get("/:tripId", async ({ params: { tripId }, currentUser, set }) => {
-    if (!currentUser) {
-      set.status = 401;
-      return { ok: false, message: "Unauthorized" };
-    }
-
-    const detail = await getTripById(tripId, currentUser.id);
-    if (!detail) {
-      set.status = 404;
-      return { ok: false, message: "Not found" };
-    }
-
-    return { ok: true, data: detail };
   });
+// .get("/:tripId", async ({ params: { tripId }, currentUser, set }) => {
+//   if (!currentUser) {
+//     set.status = 401;
+//     return { ok: false, message: "Unauthorized" };
+//   }
+
+//   const detail = await getTripById(tripId, currentUser.id);
+//   if (!detail) {
+//     set.status = 404;
+//     return { ok: false, message: "Not found" };
+//   }
+
+//   return { ok: true, data: detail };
+// });
