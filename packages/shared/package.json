@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./trip": "./src/trip.ts",
     "./trip-schema": "./src/trip-schema.ts",
-    "./itinerary-schema": "./src/itinerary-schema.ts"
+    "./itinerary-schema": "./src/itinerary-schema.ts",
+    "./invitation": "./src/invitation.ts",
+    "./invitation-schema": "./src/invitation-schema.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

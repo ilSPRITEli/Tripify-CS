@@ -3,9 +3,15 @@ import {
   type CreateTripResponseDto,
   type TripStatus,
 } from "@repo/shared/trip";
+import type { CreateInvitationResponseDto } from "@repo/shared";
+import { createInvitationSchema } from "@repo/shared/invitation-schema";
 import { createTripSchema } from "@repo/shared/trip-schema";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
+import {
+  createInvitation,
+  getTripMembers,
+} from "../services/invitation.service";
 import {
   createTrip,
   getMyTrips,
@@ -86,6 +92,55 @@ export const tripsRoutes = new Elysia({
     }
 
     return { ok: true, data: days };
+  })
+  .post(
+    "/:tripId/invitations",
+    async ({ params: { tripId }, body, currentUser, set }) => {
+      if (!currentUser) {
+        set.status = 401;
+        return { ok: false, message: "Unauthorized" };
+      }
+
+      const parsed = createInvitationSchema.safeParse(body);
+      if (!parsed.success) {
+        set.status = 400;
+        return {
+          ok: false,
+          message: "Validation failed",
+          errors: parsed.error.flatten().fieldErrors,
+        };
+      }
+
+      const result = await createInvitation(
+        tripId,
+        currentUser.id,
+        parsed.data,
+      );
+      if (!result.ok) {
+        set.status = result.status;
+        return { ok: false, message: result.message };
+      }
+
+      const data: CreateInvitationResponseDto = {
+        id: result.id,
+        status: result.status,
+      };
+      return { ok: true, data };
+    },
+  )
+  .get("/:tripId/members", async ({ params: { tripId }, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const members = await getTripMembers(tripId, currentUser.id);
+    if (members === null) {
+      set.status = 404;
+      return { ok: false, message: "Not found" };
+    }
+
+    return { ok: true, data: members };
   })
   .get("/:tripId", async ({ params: { tripId }, currentUser, set }) => {
     if (!currentUser) {

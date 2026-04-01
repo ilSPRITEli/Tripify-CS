@@ -55,6 +55,7 @@ export type TripMemberDto = {
   role: TripMemberRole;
   joinedAt: string;
   user: {
+    id: string;
     fullName: string;
     email?: string;
     avatarUrl: string | null;

@@ -40,6 +40,7 @@ import {
   Clock,
   Crown,
   DollarSign,
+  Mail,
   MapPin,
   Pencil,
   Plus,
@@ -846,6 +847,11 @@ export default function TripDetail() {
   const navigate = useNavigate();
   const [trip, setTrip] = useState<TripDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteMessage, setInviteMessage] = useState("");
+  const [inviteSaving, setInviteSaving] = useState(false);
 
   const loadTrip = useCallback(async () => {
     if (!tripId) return;
@@ -877,6 +883,24 @@ export default function TripDetail() {
       }
     } else {
       setTrip(payload.data);
+    }
+
+    const meRes = await api.auth.me.get();
+    const mePayload = meRes.data;
+    if (
+      !meRes.error &&
+      mePayload &&
+      typeof mePayload === "object" &&
+      "ok" in mePayload &&
+      mePayload.ok === true &&
+      "data" in mePayload &&
+      mePayload.data &&
+      typeof mePayload.data === "object" &&
+      "id" in mePayload.data
+    ) {
+      setCurrentUserId((mePayload.data as { id: string }).id);
+    } else {
+      setCurrentUserId(null);
     }
   }, [tripId, navigate]);
 
@@ -921,6 +945,43 @@ export default function TripDetail() {
     trip.budgetTotal != null
       ? `${trip.budgetTotal.toLocaleString()} (budget)`
       : null;
+
+  const isOwner =
+    !!currentUserId &&
+    trip.members.some(
+      (m) => m.role === "OWNER" && m.userId === currentUserId,
+    );
+
+  const submitInvite = async () => {
+    if (!tripId) return;
+    const email = inviteEmail.trim();
+    if (!email) {
+      toast.error("Email is required");
+      return;
+    }
+    setInviteSaving(true);
+    const res = await api.trips({ tripId }).invitations.post({
+      inviteeEmail: email,
+      message: inviteMessage.trim() ? inviteMessage.trim() : null,
+    });
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not send invitation"));
+      setInviteSaving(false);
+      return;
+    }
+    toast.success("Invitation sent");
+    setInviteOpen(false);
+    setInviteEmail("");
+    setInviteMessage("");
+    setInviteSaving(false);
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -1060,6 +1121,87 @@ export default function TripDetail() {
                 ))}
               </ul>
             </div>
+
+            {isOwner ? (
+              <div className="border-border/80 shadow-card rounded-2xl border bg-card p-6">
+                <h3 className="text-foreground flex items-center gap-2 font-semibold">
+                  <Mail className="h-4 w-4" />
+                  Invite
+                </h3>
+                <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                  Send an email invitation to add someone to this trip.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4 w-full rounded-full"
+                  onClick={() => setInviteOpen(true)}
+                >
+                  Invite by email
+                </Button>
+              </div>
+            ) : null}
+
+            <div className="text-center">
+              <Link
+                to="/invitations"
+                className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+              >
+                View all invitations
+              </Link>
+            </div>
+
+            <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite by email</DialogTitle>
+                  <DialogDescription>
+                    They will see this trip in Invitations after they sign in
+                    with the same email.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3 py-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="invite-email">Email</Label>
+                    <Input
+                      id="invite-email"
+                      type="email"
+                      autoComplete="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="friend@example.com"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="invite-msg">Message (optional)</Label>
+                    <Textarea
+                      id="invite-msg"
+                      value={inviteMessage}
+                      onChange={(e) => setInviteMessage(e.target.value)}
+                      rows={3}
+                      placeholder="Come join our trip!"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setInviteOpen(false)}
+                    disabled={inviteSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => void submitInvite()}
+                    disabled={inviteSaving}
+                  >
+                    {inviteSaving ? "Sending…" : "Send invite"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </aside>
         </div>
       </motion.div>

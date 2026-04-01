@@ -1119,30 +1119,32 @@ Avoid:
 
 ---
 
+> **Checklist hygiene:** พอฟีเจอร์ใน repo ใช้งานได้จริงแล้ว ให้อัปเดตช่องด้านล่างจาก `[ ]` เป็น `[x]` ในเดียวกับงานนั้น (หรือทันทีหลัง merge) เพื่อให้เอกสารสะท้อนสถานะล่าสุด
+
 # Backend Structure Checklist
 
 ## Basic structure
-- [ ] `src/app.ts`
-- [ ] `src/index.ts`
-- [ ] `src/lib/prisma.ts`
-- [ ] `src/lib/supabase.ts`
-- [ ] `src/plugins/auth.ts`
-- [ ] `src/routes/` (optional if time allows)
+- [x] `src/app.ts`
+- [x] `src/index.ts`
+- [x] `src/lib/prisma.ts`
+- [x] `src/lib/supabase.ts`
+- [x] `src/plugins/auth.ts`
+- [x] `src/routes/` (optional if time allows)
 
 ## Rules
-- [ ] `app.ts` exports default app
-- [ ] `index.ts` is for local `listen()` only if needed
-- [ ] avoid circular imports
-- [ ] keep import flow one-directional:
+- [x] `app.ts` exports default app
+- [x] `index.ts` is for local `listen()` only if needed
+- [x] avoid circular imports
+- [x] keep import flow one-directional:
   - `index -> app -> plugins/routes -> lib`
-- [ ] `lib` must not import `app`, `routes`, or `plugins`
+- [x] `lib` must not import `app`, `routes`, or `plugins`
 
 ---
 
 # Step 0: Debug/Infra
 
-- [ ] `GET /health` works locally
-- [ ] `GET /db-check` works locally
+- [x] `GET /health` works locally
+- [x] `GET /db-check` works locally
 - [ ] `GET /health` works on deployed API
 - [ ] `GET /db-check` works on deployed API
 
@@ -1155,109 +1157,109 @@ Avoid:
 # Step 1: Auth
 
 ## Backend
-- [ ] create Supabase server client/helper
-- [ ] create auth plugin using Bearer token
-- [ ] verify token with Supabase
-- [ ] upsert current user in local `User` table
-- [ ] expose current user in request context
-- [ ] implement `GET /auth/me`
+- [x] create Supabase server client/helper
+- [x] create auth plugin using Bearer token
+- [x] verify token with Supabase
+- [x] upsert current user in local `User` table
+- [x] expose current user in request context
+- [x] implement `GET /auth/me`
 
 ## Frontend
-- [ ] install Supabase client
-- [ ] create `supabase.ts`
-- [ ] create login button
-- [ ] Google login flow works
-- [ ] logout works
-- [ ] session is available on frontend
-- [ ] Eden Treaty attaches Bearer token to requests
-- [ ] call `/auth/me` successfully from frontend
+- [x] install Supabase client
+- [x] create `supabase.ts`
+- [x] create login button
+- [x] Google login flow works
+- [x] logout works
+- [x] session is available on frontend
+- [x] Eden Treaty attaches Bearer token to requests
+- [x] call `/auth/me` successfully from frontend
 
 ## Done when
-- [ ] user can sign in with Google
-- [ ] frontend receives session
-- [ ] backend recognizes current user
-- [ ] `/auth/me` returns correct user data
+- [x] user can sign in with Google
+- [x] frontend receives session
+- [x] backend recognizes current user
+- [x] `/auth/me` returns correct user data
 
 ---
 
 # Step 2: Trip Create/List/Detail
 
 ## Backend
-- [ ] implement `POST /trips`
-- [ ] implement `GET /trips`
-- [ ] implement `GET /trips/:tripId`
+- [x] implement `POST /trips`
+- [x] implement `GET /trips`
+- [x] implement `GET /trips/:tripId`
 - [ ] implement `PATCH /trips/:tripId`
 
 ## Business rules
-- [ ] current user becomes trip owner
-- [ ] current user is inserted into `TripMember` as `OWNER`
-- [ ] `TripDay` rows are auto-generated from startDate to endDate
+- [x] current user becomes trip owner
+- [x] current user is inserted into `TripMember` as `OWNER`
+- [x] `TripDay` rows are auto-generated from startDate to endDate
 
 ## Frontend
-- [ ] create trip form
-- [ ] trip list page
-- [ ] trip detail page
-- [ ] show trip metadata
-- [ ] show member list
-- [ ] show days
+- [x] create trip form
+- [x] trip list page
+- [x] trip detail page
+- [x] show trip metadata
+- [x] show member list
+- [x] show days
 
 ## Done when
-- [ ] user can create a trip
-- [ ] user can see their trip in trip list
-- [ ] user can open trip detail page
+- [x] user can create a trip
+- [x] user can see their trip in trip list
+- [x] user can open trip detail page
 
 ---
 
 # Step 3: Day-by-Day Itinerary
 
 ## Backend
-- [ ] implement `GET /trips/:tripId/days`
-- [ ] implement `PATCH /trip-days/:tripDayId`
-- [ ] implement `POST /trip-days/:tripDayId/items`
-- [ ] implement `PATCH /itinerary-items/:itemId`
-- [ ] implement `DELETE /itinerary-items/:itemId`
+- [x] implement `GET /trips/:tripId/days`
+- [x] implement `PATCH /trip-days/:tripDayId`
+- [x] implement `POST /trip-days/:tripDayId/items`
+- [x] implement `PATCH /itinerary-items/:itemId`
+- [x] implement `DELETE /itinerary-items/:itemId`
 
 ## Frontend
-- [ ] day sections in trip detail
-- [ ] create itinerary item form/modal
-- [ ] edit itinerary item
-- [ ] delete itinerary item
-- [ ] render itinerary list per day
+- [x] day sections in trip detail
+- [x] create itinerary item form/modal
+- [x] edit itinerary item
+- [x] delete itinerary item
+- [x] render itinerary list per day
 
 ## Done when
-- [ ] user can add itinerary items to a day
-- [ ] user can edit/delete items
-- [ ] trip detail page clearly shows daily plan
+- [x] user can add itinerary items to a day
+- [x] user can edit/delete items
+- [x] trip detail page clearly shows daily plan
 
 ---
 
 # Step 4: Invitation Flow
 
 ## Backend
-- [ ] implement `POST /trips/:tripId/invitations`
-- [ ] implement `GET /invitations`
-- [ ] implement `POST /invitations/:invitationId/accept`
-- [ ] implement `POST /invitations/:invitationId/decline`
-- [ ] implement `GET /trips/:tripId/members`
+- [x] implement `POST /trips/:tripId/invitations`
+- [x] implement `GET /invitations`
+- [x] implement `POST /invitations/:invitationId/accept`
+- [x] implement `POST /invitations/:invitationId/decline`
+- [x] implement `GET /trips/:tripId/members`
 
 ## Business rules
-- [ ] only owner can invite
-- [ ] invitation can target `inviteeUserId` or `inviteeEmail`
-- [ ] accepting invitation creates `TripMember` if not already exists
-- [ ] declining invitation updates status only
+- [x] only owner can invite
+- [x] invitation can target `inviteeUserId` or `inviteeEmail`
+- [x] accepting invitation creates `TripMember` if not already exists
+- [x] declining invitation updates status only
 
 ## Frontend
-- [ ] invitation form in trip detail
-- [ ] invitation list page
-- [ ] accept button
-- [ ] decline button
-- [ ] members section in trip detail
+- [x] invitation form in trip detail
+- [x] invitation list page
+- [x] accept button
+- [x] decline button
+- [x] members section in trip detail
 
 ## Done when
-- [ ] owner can send invitation
-- [ ] invited user can see invitation
-- [ ] invited user can accept/decline
-- [ ] accepted invitation creates trip membership
+- [x] owner can send invitation
+- [x] invited user can see invitation
+- [x] invited user can accept/decline
+- [x] accepted invitation creates trip membership
 
 ---
 
@@ -1341,30 +1343,30 @@ Avoid:
 # Shared Types Checklist
 
 ## Only add when needed
-- [ ] `ApiResponse<T>`
-- [ ] `AuthMeResponse`
-- [ ] `CreateTripDto`
+- [x] `ApiResponse<T>`
+- [x] `AuthMeResponse`
+- [x] `CreateTripDto`
 - [ ] `UpdateTripDto`
-- [ ] `CreateItineraryItemDto`
-- [ ] `CreateInvitationDto`
+- [x] `CreateItineraryItemDto`
+- [x] `CreateInvitationDto`
 - [ ] `CreateRatingDto`
 
 ## Rule
-- [ ] do not overbuild shared package early
-- [ ] add shared types only when both frontend and backend actually need them
+- [x] do not overbuild shared package early
+- [x] add shared types only when both frontend and backend actually need them
 
 ---
 
 # UI Checklist
 
 ## Core screens
-- [ ] Landing page
-- [ ] Login page
-- [ ] My Trips page
-- [ ] Create Trip page
-- [ ] Trip Detail page
-- [ ] Invitations page
-- [ ] Templates page
+- [x] Landing page
+- [x] Login page
+- [x] My Trips page
+- [x] Create Trip page
+- [x] Trip Detail page
+- [x] Invitations page
+- [x] Templates page
 - [ ] Rate Trip modal/page
 
 ## UX direction
@@ -1383,13 +1385,13 @@ Avoid:
 # Demo Flow Checklist
 
 ## Ideal demo story
-- [ ] sign in with Google
-- [ ] create trip
-- [ ] show auto-generated trip days
-- [ ] add itinerary items
-- [ ] invite another user
-- [ ] accept invitation as second user
-- [ ] show both users in members list
+- [x] sign in with Google
+- [x] create trip
+- [x] show auto-generated trip days
+- [x] add itinerary items
+- [x] invite another user
+- [x] accept invitation as second user
+- [x] show both users in members list
 - [ ] end trip
 - [ ] submit rating
 - [ ] publish as template

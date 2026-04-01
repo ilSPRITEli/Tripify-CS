@@ -2,6 +2,7 @@ import cors from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { prisma } from "./lib/prisma";
 import { authRoutes } from "./routes/auth.routes";
+import { invitationsRoutes } from "./routes/invitations.routes";
 import { itineraryRoutes } from "./routes/itinerary.routes";
 import { tripsRoutes } from "./routes/trips.routes";
 
@@ -15,6 +16,7 @@ const app = new Elysia()
   .use(authRoutes)
   .use(tripsRoutes)
   .use(itineraryRoutes)
+  .use(invitationsRoutes)
   .get("/health", () => ({
     ok: true,
     message: "API is running",

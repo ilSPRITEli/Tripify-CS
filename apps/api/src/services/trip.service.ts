@@ -148,12 +148,17 @@ function mapTripDay(row: {
   };
 }
 
-function mapTripMember(row: {
+export function toTripMemberDto(row: {
   id: string;
   userId: string;
   role: string;
   joinedAt: Date;
-  user: { fullName: string; email: string; avatarUrl: string | null };
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+  };
 }): TripMemberDto {
   return {
     id: row.id,
@@ -161,6 +166,7 @@ function mapTripMember(row: {
     role: row.role as TripMemberDto["role"],
     joinedAt: row.joinedAt.toISOString(),
     user: {
+      id: row.user.id,
       fullName: row.user.fullName,
       email: row.user.email,
       avatarUrl: row.user.avatarUrl,
@@ -241,7 +247,7 @@ export async function getTripById(
     timezone: trip.timezone,
     status: trip.status as TripDetailDto["status"],
     isTemplatePublished: trip.isTemplatePublished,
-    members: trip.members.map(mapTripMember),
+    members: trip.members.map(toTripMemberDto),
     days: trip.days.map((d) =>
       mapTripDay({
         ...d,
