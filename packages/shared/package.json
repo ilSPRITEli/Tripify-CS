@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./trip": "./src/trip.ts",
-    "./trip-schema": "./src/trip-schema.ts"
+    "./trip-schema": "./src/trip-schema.ts",
+    "./itinerary-schema": "./src/itinerary-schema.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit"

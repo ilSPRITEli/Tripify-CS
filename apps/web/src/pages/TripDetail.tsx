@@ -1,6 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { api, itineraryApi } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type {
@@ -19,11 +41,14 @@ import {
   Crown,
   DollarSign,
   MapPin,
+  Pencil,
+  Plus,
   StickyNote,
+  Trash2,
   Users,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -55,7 +80,6 @@ function formatTime(iso: string | null) {
   });
 }
 
-/** API / Eden may return ISO strings or Date instances */
 function formatTripDayYmd(value: string | Date) {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) {
@@ -64,62 +88,391 @@ function formatTripDayYmd(value: string | Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function ItemRow({ item }: { item: ItineraryItemDto }) {
+function isoToDatetimeLocal(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function datetimeLocalToIso(local: string): string | undefined {
+  if (!local.trim()) return undefined;
+  const d = new Date(local);
+  if (Number.isNaN(d.getTime())) return undefined;
+  return d.toISOString();
+}
+
+function extractApiErrorMessage(payload: unknown, fallback: string): string {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "message" in payload &&
+    typeof (payload as { message: unknown }).message === "string"
+  ) {
+    return (payload as { message: string }).message;
+  }
+  return fallback;
+}
+
+function ItemRow({
+  item,
+  onRefresh,
+}: {
+  item: ItineraryItemDto;
+  onRefresh: () => Promise<void>;
+}) {
   const start = formatTime(item.startTime);
   const end = formatTime(item.endTime);
   const timeRange = start && end ? `${start} – ${end}` : (start ?? end ?? null);
 
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [title, setTitle] = useState(item.title);
+  const [description, setDescription] = useState(item.description ?? "");
+  const [placeName, setPlaceName] = useState(item.placeName ?? "");
+  const [placeAddress, setPlaceAddress] = useState(item.placeAddress ?? "");
+  const [country, setCountry] = useState(item.country ?? "");
+  const [city, setCity] = useState(item.city ?? "");
+  const [startLocal, setStartLocal] = useState(isoToDatetimeLocal(item.startTime));
+  const [endLocal, setEndLocal] = useState(isoToDatetimeLocal(item.endTime));
+  const [estimatedCost, setEstimatedCost] = useState(
+    item.estimatedCost != null ? String(item.estimatedCost) : "",
+  );
+  const [currency, setCurrency] = useState(item.currency ?? "THB");
+  const [note, setNote] = useState(item.note ?? "");
+  const [isCompleted, setIsCompleted] = useState(item.isCompleted);
+
+  useEffect(() => {
+    if (!editOpen) return;
+    setTitle(item.title);
+    setDescription(item.description ?? "");
+    setPlaceName(item.placeName ?? "");
+    setPlaceAddress(item.placeAddress ?? "");
+    setCountry(item.country ?? "");
+    setCity(item.city ?? "");
+    setStartLocal(isoToDatetimeLocal(item.startTime));
+    setEndLocal(isoToDatetimeLocal(item.endTime));
+    setEstimatedCost(
+      item.estimatedCost != null ? String(item.estimatedCost) : "",
+    );
+    setCurrency(item.currency ?? "THB");
+    setNote(item.note ?? "");
+    setIsCompleted(item.isCompleted);
+  }, [editOpen, item]);
+
+  const submitEdit = async () => {
+    if (!title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSaving(true);
+    const body: Record<string, unknown> = {
+      title: title.trim(),
+      description: description.trim() || null,
+      placeName: placeName.trim() || null,
+      placeAddress: placeAddress.trim() || null,
+      country: country.trim() || null,
+      city: city.trim() || null,
+      note: note.trim() || null,
+      currency: currency.trim() || null,
+      isCompleted,
+    };
+    const sIso = datetimeLocalToIso(startLocal);
+    const eIso = datetimeLocalToIso(endLocal);
+    if (sIso !== undefined) body.startTime = sIso;
+    else body.startTime = null;
+    if (eIso !== undefined) body.endTime = eIso;
+    else body.endTime = null;
+    const costNum = estimatedCost.trim() === "" ? null : Number(estimatedCost);
+    if (costNum !== null && Number.isNaN(costNum)) {
+      toast.error("Invalid cost");
+      setSaving(false);
+      return;
+    }
+    body.estimatedCost = costNum;
+
+    const res = await itineraryApi["itinerary-items"]({ itemId: item.id }).patch(
+      body,
+    );
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not update item"));
+      setSaving(false);
+      return;
+    }
+    toast.success("Activity updated");
+    setEditOpen(false);
+    setSaving(false);
+    await onRefresh();
+  };
+
+  const confirmDelete = async () => {
+    setSaving(true);
+    const res = await itineraryApi["itinerary-items"]({ itemId: item.id }).delete();
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not delete"));
+      setSaving(false);
+      return;
+    }
+    toast.success("Activity removed");
+    setDeleteOpen(false);
+    setSaving(false);
+    await onRefresh();
+  };
+
   return (
-    <div className="group relative ml-6 border-l-2 border-primary/20 pb-6 pl-6 last:pb-0">
-      <div className="bg-primary absolute top-0 -left-[9px] h-4 w-4 rounded-full border-2 border-background" />
-      <div className="border-border/80 shadow-card hover:shadow-card-hover rounded-xl border bg-card p-4 transition-shadow">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h4 className="text-foreground font-semibold">{item.title}</h4>
-              {item.isCompleted ? (
-                <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+    <>
+      <div className="group relative ml-6 border-l-2 border-primary/20 pb-6 pl-6 last:pb-0">
+        <div className="bg-primary absolute top-0 -left-[9px] h-4 w-4 rounded-full border-2 border-background" />
+        <div className="border-border/80 shadow-card hover:shadow-card-hover rounded-xl border bg-card p-4 transition-shadow">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-foreground font-semibold">{item.title}</h4>
+                {item.isCompleted ? (
+                  <Check className="h-4 w-4 shrink-0 text-emerald-500" />
+                ) : null}
+              </div>
+              {item.description ? (
+                <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+                  {item.description}
+                </p>
               ) : null}
             </div>
-            {item.description ? (
-              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-                {item.description}
-              </p>
+            <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setEditOpen(true)}
+                aria-label="Edit activity"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive h-8 w-8"
+                onClick={() => setDeleteOpen(true)}
+                aria-label="Delete activity"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="text-muted-foreground mt-3 flex flex-wrap gap-3 text-xs">
+            {item.placeName ? (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {item.placeName}
+              </span>
+            ) : null}
+            {timeRange ? (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {timeRange}
+              </span>
+            ) : null}
+            {item.estimatedCost != null && item.estimatedCost > 0 ? (
+              <span className="flex items-center gap-1">
+                <DollarSign className="h-3 w-3" />
+                {item.estimatedCost.toLocaleString()} {item.currency ?? "THB"}
+              </span>
             ) : null}
           </div>
-        </div>
-        <div className="text-muted-foreground mt-3 flex flex-wrap gap-3 text-xs">
-          {item.placeName ? (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {item.placeName}
-            </span>
-          ) : null}
-          {timeRange ? (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {timeRange}
-            </span>
-          ) : null}
-          {item.estimatedCost != null && item.estimatedCost > 0 ? (
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              {item.estimatedCost.toLocaleString()} {item.currency ?? "THB"}
-            </span>
+          {item.note ? (
+            <div className="text-muted-foreground mt-2 flex items-start gap-1.5 text-xs">
+              <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+              {item.note}
+            </div>
           ) : null}
         </div>
-        {item.note ? (
-          <div className="text-muted-foreground mt-2 flex items-start gap-1.5 text-xs">
-            <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
-            {item.note}
-          </div>
-        ) : null}
       </div>
-    </div>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit activity</DialogTitle>
+            <DialogDescription>
+              Update details or mark this activity as done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor={`title-${item.id}`}>Title</Label>
+              <Input
+                id={`title-${item.id}`}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`desc-${item.id}`}>Description</Label>
+              <Textarea
+                id={`desc-${item.id}`}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`place-${item.id}`}>Place</Label>
+                <Input
+                  id={`place-${item.id}`}
+                  value={placeName}
+                  onChange={(e) => setPlaceName(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`city-${item.id}`}>City</Label>
+                <Input
+                  id={`city-${item.id}`}
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`addr-${item.id}`}>Address</Label>
+              <Input
+                id={`addr-${item.id}`}
+                value={placeAddress}
+                onChange={(e) => setPlaceAddress(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`country-${item.id}`}>Country</Label>
+              <Input
+                id={`country-${item.id}`}
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`start-${item.id}`}>Start (local)</Label>
+                <Input
+                  id={`start-${item.id}`}
+                  type="datetime-local"
+                  value={startLocal}
+                  onChange={(e) => setStartLocal(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`end-${item.id}`}>End (local)</Label>
+                <Input
+                  id={`end-${item.id}`}
+                  type="datetime-local"
+                  value={endLocal}
+                  onChange={(e) => setEndLocal(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`cost-${item.id}`}>Estimated cost</Label>
+                <Input
+                  id={`cost-${item.id}`}
+                  inputMode="decimal"
+                  value={estimatedCost}
+                  onChange={(e) => setEstimatedCost(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`cur-${item.id}`}>Currency</Label>
+                <Input
+                  id={`cur-${item.id}`}
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`note-${item.id}`}>Note</Label>
+              <Textarea
+                id={`note-${item.id}`}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <Checkbox
+                checked={isCompleted}
+                onCheckedChange={(v) => setIsCompleted(v === true)}
+              />
+              Mark completed
+            </label>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setEditOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void submitEdit()} disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this activity?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This cannot be undone. “{item.title}” will be removed from the day.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDelete();
+              }}
+              disabled={saving}
+            >
+              {saving ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
-function DaySection({ day }: { day: TripDayDto }) {
+function DaySection({
+  day,
+  onRefresh,
+}: {
+  day: TripDayDto;
+  onRefresh: () => Promise<void>;
+}) {
   const [expanded, setExpanded] = useState(true);
   const weekday = useMemo(
     () =>
@@ -131,35 +484,336 @@ function DaySection({ day }: { day: TripDayDto }) {
     [day.date],
   );
 
+  const [editDayOpen, setEditDayOpen] = useState(false);
+  const [addItemOpen, setAddItemOpen] = useState(false);
+  const [savingDay, setSavingDay] = useState(false);
+  const [savingItem, setSavingItem] = useState(false);
+
+  const [dayTitle, setDayTitle] = useState(day.title ?? "");
+  const [dayNote, setDayNote] = useState(day.note ?? "");
+
+  useEffect(() => {
+    if (!editDayOpen) return;
+    setDayTitle(day.title ?? "");
+    setDayNote(day.note ?? "");
+  }, [editDayOpen, day.title, day.note]);
+
+  const [itemTitle, setItemTitle] = useState("");
+  const [itemDescription, setItemDescription] = useState("");
+  const [itemPlace, setItemPlace] = useState("");
+  const [itemAddress, setItemAddress] = useState("");
+  const [itemCountry, setItemCountry] = useState("");
+  const [itemCity, setItemCity] = useState("");
+  const [itemStart, setItemStart] = useState("");
+  const [itemEnd, setItemEnd] = useState("");
+  const [itemCost, setItemCost] = useState("");
+  const [itemCurrency, setItemCurrency] = useState("THB");
+  const [itemNote, setItemNote] = useState("");
+
+  const resetAddItemForm = () => {
+    setItemTitle("");
+    setItemDescription("");
+    setItemPlace("");
+    setItemAddress("");
+    setItemCountry("");
+    setItemCity("");
+    setItemStart("");
+    setItemEnd("");
+    setItemCost("");
+    setItemCurrency("THB");
+    setItemNote("");
+  };
+
+  const saveDay = async () => {
+    setSavingDay(true);
+    const res = await itineraryApi["trip-days"]({ tripDayId: day.id }).patch({
+      title: dayTitle.trim() || null,
+      note: dayNote.trim() || null,
+    });
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not update day"));
+      setSavingDay(false);
+      return;
+    }
+    toast.success("Day updated");
+    setEditDayOpen(false);
+    setSavingDay(false);
+    await onRefresh();
+  };
+
+  const createItem = async () => {
+    if (!itemTitle.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setSavingItem(true);
+    const body: Record<string, unknown> = {
+      title: itemTitle.trim(),
+      description: itemDescription.trim() || null,
+      placeName: itemPlace.trim() || null,
+      placeAddress: itemAddress.trim() || null,
+      country: itemCountry.trim() || null,
+      city: itemCity.trim() || null,
+      note: itemNote.trim() || null,
+      currency: itemCurrency.trim() || null,
+    };
+    const sIso = datetimeLocalToIso(itemStart);
+    const eIso = datetimeLocalToIso(itemEnd);
+    if (sIso) body.startTime = sIso;
+    if (eIso) body.endTime = eIso;
+    const costNum = itemCost.trim() === "" ? undefined : Number(itemCost);
+    if (costNum !== undefined && Number.isNaN(costNum)) {
+      toast.error("Invalid cost");
+      setSavingItem(false);
+      return;
+    }
+    if (costNum !== undefined) body.estimatedCost = costNum;
+
+    const res = await itineraryApi["trip-days"]({ tripDayId: day.id }).items.post(
+      body,
+    );
+    const payload = res.data;
+    if (
+      res.error ||
+      !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
+      payload.ok !== true
+    ) {
+      toast.error(extractApiErrorMessage(payload, "Could not add activity"));
+      setSavingItem(false);
+      return;
+    }
+    toast.success("Activity added");
+    setAddItemOpen(false);
+    resetAddItemForm();
+    setSavingItem(false);
+    await onRefresh();
+  };
+
   return (
     <div className="border-border/80 shadow-card rounded-2xl border bg-card/70 p-5">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between gap-3 text-left"
-      >
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
           <div className="bg-primary/15 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold">
             D{day.dayNumber}
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-foreground font-semibold">
               {day.title ?? `Day ${day.dayNumber}`}
             </h3>
             <p className="text-muted-foreground text-xs">{weekday}</p>
           </div>
+          {expanded ? (
+            <ChevronUp className="text-muted-foreground ml-auto h-5 w-5 shrink-0" />
+          ) : (
+            <ChevronDown className="text-muted-foreground ml-auto h-5 w-5 shrink-0" />
+          )}
+        </button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => setEditDayOpen(true)}
+          >
+            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+            Edit day
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="rounded-full"
+            onClick={() => {
+              resetAddItemForm();
+              setAddItemOpen(true);
+            }}
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Add activity
+          </Button>
         </div>
-        {expanded ? (
-          <ChevronUp className="text-muted-foreground h-5 w-5 shrink-0" />
-        ) : (
-          <ChevronDown className="text-muted-foreground h-5 w-5 shrink-0" />
-        )}
-      </button>
+      </div>
       {day.note ? (
-        <p className="text-muted-foreground mt-2 ml-[52px] text-sm">
-          {day.note}
-        </p>
+        <p className="text-muted-foreground mt-2 text-sm">{day.note}</p>
       ) : null}
+
+      <Dialog open={editDayOpen} onOpenChange={setEditDayOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit day</DialogTitle>
+            <DialogDescription>Title and notes for this day.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor={`day-title-${day.id}`}>Title</Label>
+              <Input
+                id={`day-title-${day.id}`}
+                value={dayTitle}
+                onChange={(e) => setDayTitle(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`day-note-${day.id}`}>Note</Label>
+              <Textarea
+                id={`day-note-${day.id}`}
+                value={dayNote}
+                onChange={(e) => setDayNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setEditDayOpen(false)}
+              disabled={savingDay}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void saveDay()} disabled={savingDay}>
+              {savingDay ? "Saving…" : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addItemOpen} onOpenChange={setAddItemOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New activity</DialogTitle>
+            <DialogDescription>Add something to this day.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-2">
+            <div className="grid gap-2">
+              <Label htmlFor={`new-title-${day.id}`}>Title</Label>
+              <Input
+                id={`new-title-${day.id}`}
+                value={itemTitle}
+                onChange={(e) => setItemTitle(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`new-desc-${day.id}`}>Description</Label>
+              <Textarea
+                id={`new-desc-${day.id}`}
+                value={itemDescription}
+                onChange={(e) => setItemDescription(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`new-place-${day.id}`}>Place</Label>
+                <Input
+                  id={`new-place-${day.id}`}
+                  value={itemPlace}
+                  onChange={(e) => setItemPlace(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`new-city-${day.id}`}>City</Label>
+                <Input
+                  id={`new-city-${day.id}`}
+                  value={itemCity}
+                  onChange={(e) => setItemCity(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`new-addr-${day.id}`}>Address</Label>
+              <Input
+                id={`new-addr-${day.id}`}
+                value={itemAddress}
+                onChange={(e) => setItemAddress(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`new-country-${day.id}`}>Country</Label>
+              <Input
+                id={`new-country-${day.id}`}
+                value={itemCountry}
+                onChange={(e) => setItemCountry(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`new-start-${day.id}`}>Start (local)</Label>
+                <Input
+                  id={`new-start-${day.id}`}
+                  type="datetime-local"
+                  value={itemStart}
+                  onChange={(e) => setItemStart(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`new-end-${day.id}`}>End (local)</Label>
+                <Input
+                  id={`new-end-${day.id}`}
+                  type="datetime-local"
+                  value={itemEnd}
+                  onChange={(e) => setItemEnd(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor={`new-cost-${day.id}`}>Estimated cost</Label>
+                <Input
+                  id={`new-cost-${day.id}`}
+                  inputMode="decimal"
+                  value={itemCost}
+                  onChange={(e) => setItemCost(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`new-cur-${day.id}`}>Currency</Label>
+                <Input
+                  id={`new-cur-${day.id}`}
+                  value={itemCurrency}
+                  onChange={(e) => setItemCurrency(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor={`new-note-${day.id}`}>Note</Label>
+              <Textarea
+                id={`new-note-${day.id}`}
+                value={itemNote}
+                onChange={(e) => setItemNote(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setAddItemOpen(false)}
+              disabled={savingItem}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void createItem()} disabled={savingItem}>
+              {savingItem ? "Adding…" : "Add"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <AnimatePresence initial={false}>
         {expanded ? (
           <motion.div
@@ -175,7 +829,9 @@ function DaySection({ day }: { day: TripDayDto }) {
                   No activities yet.
                 </p>
               ) : (
-                day.items.map((item) => <ItemRow key={item.id} item={item} />)
+                day.items.map((item) => (
+                  <ItemRow key={item.id} item={item} onRefresh={onRefresh} />
+                ))
               )}
             </div>
           </motion.div>
@@ -191,6 +847,39 @@ export default function TripDetail() {
   const [trip, setTrip] = useState<TripDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadTrip = useCallback(async () => {
+    if (!tripId) return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    const res = await api.trips({ tripId }).get();
+    const payload = res.data;
+
+    if (
+      res.error ||
+      !payload ||
+      payload.ok !== true ||
+      !("data" in payload) ||
+      !payload.data
+    ) {
+      setTrip(null);
+      if (payload && "message" in payload) {
+        toast.error(
+          typeof payload.message === "string"
+            ? payload.message
+            : "Trip not found",
+        );
+      } else {
+        toast.error("Trip not found");
+      }
+    } else {
+      setTrip(payload.data);
+    }
+  }, [tripId, navigate]);
+
   useEffect(() => {
     const run = async () => {
       if (!tripId) {
@@ -198,40 +887,12 @@ export default function TripDetail() {
         return;
       }
 
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        navigate("/", { replace: true });
-        return;
-      }
-
-      const res = await api.trips({ tripId }).get();
-      const payload = res.data;
-
-      if (
-        res.error ||
-        !payload ||
-        payload.ok !== true ||
-        !("data" in payload) ||
-        !payload.data
-      ) {
-        setTrip(null);
-        if (payload && "message" in payload) {
-          toast.error(
-            typeof payload.message === "string"
-              ? payload.message
-              : "Trip not found",
-          );
-        } else {
-          toast.error("Trip not found");
-        }
-      } else {
-        setTrip(payload.data);
-      }
+      await loadTrip();
       setLoading(false);
     };
 
     void run();
-  }, [tripId, navigate]);
+  }, [tripId, navigate, loadTrip]);
 
   const sc = trip ? statusStyle[trip.status] : null;
 
@@ -338,7 +999,11 @@ export default function TripDetail() {
               </h2>
               <div className="space-y-4">
                 {trip.days.map((day) => (
-                  <DaySection key={day.id} day={day} />
+                  <DaySection
+                    key={day.id}
+                    day={day}
+                    onRefresh={loadTrip}
+                  />
                 ))}
               </div>
             </div>

@@ -6,7 +6,12 @@ import {
 import { createTripSchema } from "@repo/shared/trip-schema";
 import { Elysia } from "elysia";
 import { authPlugin } from "../plugins/auth";
-import { createTrip, getMyTrips, getTripById } from "../services/trip.service";
+import {
+  createTrip,
+  getMyTrips,
+  getTripById,
+  getTripDays,
+} from "../services/trip.service";
 
 export const tripsRoutes = new Elysia({
   name: "trips-routes",
@@ -67,6 +72,20 @@ export const tripsRoutes = new Elysia({
     });
 
     return { ok: true, data };
+  })
+  .get("/:tripId/days", async ({ params: { tripId }, currentUser, set }) => {
+    if (!currentUser) {
+      set.status = 401;
+      return { ok: false, message: "Unauthorized" };
+    }
+
+    const days = await getTripDays(tripId, currentUser.id);
+    if (days === null) {
+      set.status = 404;
+      return { ok: false, message: "Not found" };
+    }
+
+    return { ok: true, data: days };
   })
   .get("/:tripId", async ({ params: { tripId }, currentUser, set }) => {
     if (!currentUser) {

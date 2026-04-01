@@ -1,4 +1,5 @@
 import { treaty } from "@elysiajs/eden/treaty2";
+import type { Treaty } from "@elysiajs/eden/treaty2";
 import type { App } from "../../../api/src/app";
 import { supabase } from "./supabase";
 
@@ -23,3 +24,28 @@ export const api = treaty<App>(apiUrl, {
     return options;
   },
 });
+
+type ItineraryErrBody = { ok: boolean; message?: string };
+
+/** Eden’s `App` typing omits hyphenated path keys; this is the same client as `api`. */
+export const itineraryApi = api as unknown as {
+  "trip-days": (params: { tripDayId: string }) => {
+    patch: (body: {
+      title?: string | null;
+      note?: string | null;
+    }) => Promise<Treaty.TreatyResponse<ItineraryErrBody>>;
+    items: {
+      post: (body: Record<string, unknown>) => Promise<
+        Treaty.TreatyResponse<ItineraryErrBody>
+      >;
+    };
+  };
+  "itinerary-items": (params: { itemId: string }) => {
+    patch: (body: Record<string, unknown>) => Promise<
+      Treaty.TreatyResponse<ItineraryErrBody>
+    >;
+    delete: (body?: Record<string, unknown>) => Promise<
+      Treaty.TreatyResponse<ItineraryErrBody>
+    >;
+  };
+};

@@ -1,4 +1,5 @@
 import type {
+  CreateItineraryItemDto,
   CreateTripDto,
   ItineraryItemDto,
   TripDayDto,
@@ -6,6 +7,8 @@ import type {
   TripListItemDto,
   TripMemberDto,
   TripStatus,
+  UpdateItineraryItemDto,
+  UpdateTripDayDto,
 } from "@repo/shared";
 import { Prisma } from "../generated/prisma";
 import { prisma } from "../lib/prisma";
@@ -246,4 +249,187 @@ export async function getTripById(
       }),
     ),
   };
+}
+
+function tripAccessibleByUser(userId: string) {
+  return {
+    OR: [{ ownerId: userId }, { members: { some: { userId } } }],
+  };
+}
+
+export async function getTripDays(
+  tripId: string,
+  userId: string,
+): Promise<TripDayDto[] | null> {
+  const trip = await prisma.trip.findFirst({
+    where: {
+      id: tripId,
+      ...tripAccessibleByUser(userId),
+    },
+    include: {
+      days: {
+        orderBy: { dayNumber: "asc" },
+        include: {
+          items: { orderBy: { sortOrder: "asc" } },
+        },
+      },
+    },
+  });
+
+  if (!trip) {
+    return null;
+  }
+
+  return trip.days.map((d) => mapTripDay({ ...d, items: d.items }));
+}
+
+export async function updateTripDay(
+  tripDayId: string,
+  userId: string,
+  input: UpdateTripDayDto,
+): Promise<TripDayDto | null> {
+  const allowed = await prisma.tripDay.count({
+    where: {
+      id: tripDayId,
+      trip: tripAccessibleByUser(userId),
+    },
+  });
+
+  if (!allowed) {
+    return null;
+  }
+
+  const updated = await prisma.tripDay.update({
+    where: { id: tripDayId },
+    data: {
+      ...(input.title !== undefined ? { title: input.title } : {}),
+      ...(input.note !== undefined ? { note: input.note } : {}),
+    },
+    include: {
+      items: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+
+  return mapTripDay(updated);
+}
+
+export async function createItineraryItem(
+  tripDayId: string,
+  userId: string,
+  input: CreateItineraryItemDto,
+): Promise<ItineraryItemDto | null> {
+  const allowed = await prisma.tripDay.count({
+    where: {
+      id: tripDayId,
+      trip: tripAccessibleByUser(userId),
+    },
+  });
+
+  if (!allowed) {
+    return null;
+  }
+
+  const agg = await prisma.itineraryItem.aggregate({
+    where: { tripDayId },
+    _max: { sortOrder: true },
+  });
+  const sortOrder =
+    input.sortOrder ?? (agg._max.sortOrder ?? -1) + 1;
+
+  const created = await prisma.itineraryItem.create({
+    data: {
+      tripDayId,
+      title: input.title,
+      description: input.description ?? null,
+      placeName: input.placeName ?? null,
+      placeAddress: input.placeAddress ?? null,
+      country: input.country ?? null,
+      city: input.city ?? null,
+      startTime: input.startTime ? new Date(input.startTime) : null,
+      endTime: input.endTime ? new Date(input.endTime) : null,
+      estimatedCost:
+        input.estimatedCost != null
+          ? new Prisma.Decimal(input.estimatedCost)
+          : null,
+      currency: input.currency ?? null,
+      note: input.note ?? null,
+      sortOrder,
+    },
+  });
+
+  return mapItineraryItem(created);
+}
+
+export async function updateItineraryItem(
+  itemId: string,
+  userId: string,
+  input: UpdateItineraryItemDto,
+): Promise<ItineraryItemDto | null> {
+  const allowed = await prisma.itineraryItem.count({
+    where: {
+      id: itemId,
+      tripDay: {
+        trip: tripAccessibleByUser(userId),
+      },
+    },
+  });
+
+  if (!allowed) {
+    return null;
+  }
+
+  const data: Prisma.ItineraryItemUpdateInput = {};
+  if (input.title !== undefined) data.title = input.title;
+  if (input.description !== undefined) data.description = input.description;
+  if (input.placeName !== undefined) data.placeName = input.placeName;
+  if (input.placeAddress !== undefined)
+    data.placeAddress = input.placeAddress;
+  if (input.country !== undefined) data.country = input.country;
+  if (input.city !== undefined) data.city = input.city;
+  if (input.startTime !== undefined) {
+    data.startTime =
+      input.startTime === null ? null : new Date(input.startTime);
+  }
+  if (input.endTime !== undefined) {
+    data.endTime = input.endTime === null ? null : new Date(input.endTime);
+  }
+  if (input.estimatedCost !== undefined) {
+    data.estimatedCost =
+      input.estimatedCost === null
+        ? null
+        : new Prisma.Decimal(input.estimatedCost);
+  }
+  if (input.currency !== undefined) data.currency = input.currency;
+  if (input.note !== undefined) data.note = input.note;
+  if (input.sortOrder !== undefined) data.sortOrder = input.sortOrder;
+  if (input.isCompleted !== undefined) data.isCompleted = input.isCompleted;
+
+  const updated = await prisma.itineraryItem.update({
+    where: { id: itemId },
+    data,
+  });
+
+  return mapItineraryItem(updated);
+}
+
+export async function deleteItineraryItem(
+  itemId: string,
+  userId: string,
+): Promise<{ id: string } | null> {
+  const allowed = await prisma.itineraryItem.count({
+    where: {
+      id: itemId,
+      tripDay: {
+        trip: tripAccessibleByUser(userId),
+      },
+    },
+  });
+
+  if (!allowed) {
+    return null;
+  }
+
+  await prisma.itineraryItem.delete({ where: { id: itemId } });
+
+  return { id: itemId };
 }

@@ -104,3 +104,27 @@ export type TripDetailDto = {
   members: TripMemberDto[];
   days: TripDayDto[];
 };
+
+export type UpdateTripDayDto = {
+  title?: string | null;
+  note?: string | null;
+};
+
+export type CreateItineraryItemDto = {
+  title: string;
+  description?: string | null;
+  placeName?: string | null;
+  placeAddress?: string | null;
+  country?: string | null;
+  city?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  estimatedCost?: number | null;
+  currency?: string | null;
+  note?: string | null;
+  sortOrder?: number;
+};
+
+export type UpdateItineraryItemDto = Partial<CreateItineraryItemDto> & {
+  isCompleted?: boolean;
+};

@@ -3,6 +3,7 @@ export type { AuthMeDto, AuthMeResponse } from "./auth";
 export { createTripSchema, type CreateTripInput } from "./trip-schema";
 export { TRIP_MEMBER_ROLE, TRIP_STATUS } from "./trip";
 export type {
+  CreateItineraryItemDto,
   CreateTripDto,
   CreateTripResponseDto,
   ItineraryItemDto,
@@ -12,4 +13,14 @@ export type {
   TripMemberDto,
   TripMemberRole,
   TripStatus,
+  UpdateItineraryItemDto,
+  UpdateTripDayDto,
 } from "./trip";
+export {
+  createItineraryItemSchema,
+  updateItineraryItemSchema,
+  updateTripDaySchema,
+  type CreateItineraryItemInput,
+  type UpdateItineraryItemInput,
+  type UpdateTripDayInput,
+} from "./itinerary-schema";
