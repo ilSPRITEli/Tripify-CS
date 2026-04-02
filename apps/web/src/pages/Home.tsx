@@ -3,12 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
-import { MapPin, Plane } from "lucide-react";
+import { MapPin, Plane, PlaneIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
+import Logo from "@/assets/icons.svg";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ export default function Home() {
         animate={{ y: [0, -12, 0], rotate: [0, 6, 0] }}
         transition={{ duration: 7, repeat: Infinity }}
       >
-        <Plane className="h-20 w-20 md:h-24 md:w-24" />
+        <PlaneIcon className="h-20 w-20 md:h-24 md:w-24" />
       </motion.div>
       <motion.div
         className="absolute right-[6%] bottom-24 text-accent/20 md:right-14"
@@ -75,9 +76,11 @@ export default function Home() {
           <Card className="rounded-2xl border-border/60 shadow-elevated backdrop-blur-sm">
             <CardContent className="flex flex-col items-center gap-8 px-8 pt-12 pb-10">
               <div className="flex flex-col items-center gap-4 text-center">
-                <div className="gradient-primary flex h-16 w-16 items-center justify-center rounded-2xl shadow-primary-glow">
-                  <Plane className="text-primary-foreground h-8 w-8" />
-                </div>
+                <img
+                  src={Logo}
+                  alt="Tripify"
+                  className="h-20 w-20 md:h-24 md:w-24"
+                />
                 <div>
                   <h1 className="text-gradient-primary text-3xl font-bold tracking-tight">
                     Tripify
