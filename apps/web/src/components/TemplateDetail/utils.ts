@@ -6,8 +6,12 @@ export function formatTime(iso: string | null) {
   });
 }
 
-export function formatYmd(value: string) {
-  return value.slice(0, 10);
+export function formatYmd(value: string | Date) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    return typeof value === "string" ? value.slice(0, 10) : "—";
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 export function extractMessage(payload: unknown, fallback: string): string {

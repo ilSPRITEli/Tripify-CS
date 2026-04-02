@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TemplateDayRead } from "@/components/TemplateDetail/TemplateDayRead";
 import { extractMessage, formatYmd } from "@/components/TemplateDetail/utils";
-import { api } from "@/lib/api";
+import { api, treatyResponseBody } from "@/lib/api";
 import type { TripDetailDto } from "@repo/shared";
 import {
   ArrowLeft,
@@ -41,7 +41,7 @@ export default function TemplateDetail() {
   const load = useCallback(async () => {
     if (!tripId) return;
     const res = await api.templates({ tripId }).get();
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -87,7 +87,7 @@ export default function TemplateDetail() {
       startDate: `${cloneStart}T00:00:00.000Z`,
       endDate: `${cloneEnd}T00:00:00.000Z`,
     });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||

@@ -9,6 +9,22 @@ if (!apiUrl) {
   throw new Error("VITE_API_URL is not set");
 }
 
+/**
+ * Eden Treaty: for non-2xx responses, `data` is null and the parsed JSON body is
+ * on `error.value`. Use this when reading `message` (or other fields) from errors.
+ */
+export function treatyResponseBody(res: {
+  data: unknown;
+  error?: unknown;
+}): unknown {
+  if (res.data != null) return res.data;
+  const e = res.error;
+  if (e != null && typeof e === "object" && "value" in e) {
+    return (e as { value: unknown }).value;
+  }
+  return null;
+}
+
 export const api = treaty<App>(apiUrl, {
   async onRequest(_path, options) {
     const { data } = await supabase.auth.getSession();

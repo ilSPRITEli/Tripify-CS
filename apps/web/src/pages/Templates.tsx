@@ -9,8 +9,12 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 
-function formatYmd(iso: string) {
-  return iso.slice(0, 10);
+function formatYmd(value: string | Date) {
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) {
+    return typeof value === "string" ? value.slice(0, 10) : "—";
+  }
+  return d.toISOString().slice(0, 10);
 }
 
 export default function Templates() {
