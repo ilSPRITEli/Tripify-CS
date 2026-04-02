@@ -150,7 +150,7 @@ export default function CreateTrip() {
         </p>
 
         <form className="mt-8 space-y-6" onSubmit={(e) => void handleSubmit(e)}>
-          <div className="hidden border-border bg-muted/40 flex h-36 cursor-not-allowed items-center justify-center rounded-2xl border-2 border-dashed opacity-80">
+          <div className="hidden border-border bg-muted/40 h-36 cursor-not-allowed items-center justify-center rounded-2xl border-2 border-dashed opacity-80">
             <div className="text-center">
               <Image className="text-muted-foreground mx-auto h-8 w-8" />
               <p className="text-muted-foreground mt-2 text-sm">
