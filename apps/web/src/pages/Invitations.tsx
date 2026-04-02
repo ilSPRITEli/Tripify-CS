@@ -7,37 +7,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { InvitationCard } from "@/components/Invitations/InvitationCard";
+import {
+  extractMessage,
+  invitationStatusLabel,
+} from "@/components/Invitations/utils";
 import { api } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { InvitationListItemDto, InvitationStatus } from "@repo/shared";
 import { INVITATION_STATUS } from "@repo/shared";
-import { Loader2, Mail, Send, Inbox } from "lucide-react";
+import { Inbox, Loader2, Mail, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
-
-function extractMessage(payload: unknown, fallback: string): string {
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "message" in payload &&
-    typeof (payload as { message: unknown }).message === "string"
-  ) {
-    return (payload as { message: string }).message;
-  }
-  return fallback;
-}
-
-const statusLabel: Record<string, string> = {
-  PENDING: "Pending",
-  ACCEPTED: "Accepted",
-  DECLINED: "Declined",
-  EXPIRED: "Expired",
-  REVOKED: "Revoked",
-  CANCELLED: "Cancelled",
-};
 
 export default function Invitations() {
   const navigate = useNavigate();
@@ -182,7 +166,7 @@ export default function Invitations() {
               <SelectItem value="all">All statuses</SelectItem>
               {(INVITATION_STATUS as readonly InvitationStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>
-                  {statusLabel[s] ?? s}
+                  {invitationStatusLabel[s] ?? s}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -211,69 +195,13 @@ export default function Invitations() {
           <ul className="space-y-4">
             {items.map((inv) => (
               <li key={inv.id}>
-                <Card className="border-border/80 shadow-card rounded-2xl">
-                  <CardContent className="p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 space-y-1">
-                        <Link
-                          to={`/trips/${inv.trip.id}`}
-                          className="text-foreground font-semibold hover:underline"
-                        >
-                          {inv.trip.title}
-                        </Link>
-                        <p className="text-muted-foreground text-sm">
-                          {inv.trip.destination} · From{" "}
-                          <span className="text-foreground">
-                            {inv.inviter.fullName}
-                          </span>
-                        </p>
-                        {inv.message ? (
-                          <p className="text-muted-foreground mt-2 border-l-2 border-primary/30 pl-3 text-sm italic">
-                            “{inv.message}”
-                          </p>
-                        ) : null}
-                      </div>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-                          inv.status === "PENDING"
-                            ? "bg-primary/15 text-primary"
-                            : inv.status === "ACCEPTED"
-                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                              : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {statusLabel[inv.status] ?? inv.status}
-                      </span>
-                    </div>
-
-                    {tab === "received" && inv.status === "PENDING" ? (
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          className="rounded-full"
-                          disabled={actionId !== null}
-                          onClick={() => void accept(inv.id)}
-                        >
-                          {actionId === inv.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Accept"
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-full"
-                          disabled={actionId !== null}
-                          onClick={() => void decline(inv.id)}
-                        >
-                          Decline
-                        </Button>
-                      </div>
-                    ) : null}
-                  </CardContent>
-                </Card>
+                <InvitationCard
+                  inv={inv}
+                  tab={tab}
+                  actionId={actionId}
+                  onAccept={accept}
+                  onDecline={decline}
+                />
               </li>
             ))}
           </ul>

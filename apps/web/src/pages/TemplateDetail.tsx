@@ -10,159 +10,22 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TemplateDayRead } from "@/components/TemplateDetail/TemplateDayRead";
+import { extractMessage, formatYmd } from "@/components/TemplateDetail/utils";
 import { api } from "@/lib/api";
-import type { TripDayDto, TripDetailDto } from "@repo/shared";
+import type { TripDetailDto } from "@repo/shared";
 import {
   ArrowLeft,
   CalendarRange,
-  ChevronDown,
-  ChevronUp,
-  Clock,
   Copy,
   Crown,
   DollarSign,
   MapPin,
-  StickyNote,
   Users,
 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate, useParams } from "react-router-dom";
-
-function formatTime(iso: string | null) {
-  if (!iso) return null;
-  return new Date(iso).toLocaleTimeString("th-TH", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatYmd(value: string) {
-  return value.slice(0, 10);
-}
-
-function TemplateItemRead({ item }: { item: TripDayDto["items"][number] }) {
-  const start = formatTime(item.startTime);
-  const end = formatTime(item.endTime);
-  const timeRange = start && end ? `${start} – ${end}` : (start ?? end ?? null);
-
-  return (
-    <div className="relative ml-6 border-l-2 border-primary/20 pb-6 pl-6 last:pb-0">
-      <div className="bg-primary absolute top-0 -left-[9px] h-4 w-4 rounded-full border-2 border-background" />
-      <div className="border-border/80 rounded-xl border bg-card p-4">
-        <h4 className="text-foreground font-semibold">{item.title}</h4>
-        {item.description ? (
-          <p className="text-muted-foreground mt-1 text-sm">{item.description}</p>
-        ) : null}
-        <div className="text-muted-foreground mt-3 flex flex-wrap gap-3 text-xs">
-          {item.placeName ? (
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {item.placeName}
-            </span>
-          ) : null}
-          {timeRange ? (
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {timeRange}
-            </span>
-          ) : null}
-          {item.estimatedCost != null && item.estimatedCost > 0 ? (
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              {item.estimatedCost.toLocaleString()} {item.currency ?? "THB"}
-            </span>
-          ) : null}
-        </div>
-        {item.note ? (
-          <p className="text-muted-foreground mt-2 flex items-start gap-1 text-xs">
-            <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
-            {item.note}
-          </p>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function TemplateDayRead({ day }: { day: TripDayDto }) {
-  const [expanded, setExpanded] = useState(true);
-  const weekday = useMemo(
-    () =>
-      new Date(day.date).toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-      }),
-    [day.date],
-  );
-
-  return (
-    <div className="border-border/80 shadow-card rounded-2xl border bg-card/70 p-5">
-      <button
-        type="button"
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between gap-3 text-left"
-      >
-        <div className="flex items-center gap-3">
-          <div className="bg-primary/15 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold">
-            D{day.dayNumber}
-          </div>
-          <div>
-            <h3 className="text-foreground font-semibold">
-              {day.title ?? `Day ${day.dayNumber}`}
-            </h3>
-            <p className="text-muted-foreground text-xs">{weekday}</p>
-          </div>
-        </div>
-        {expanded ? (
-          <ChevronUp className="text-muted-foreground h-5 w-5 shrink-0" />
-        ) : (
-          <ChevronDown className="text-muted-foreground h-5 w-5 shrink-0" />
-        )}
-      </button>
-      {day.note ? (
-        <p className="text-muted-foreground mt-2 text-sm">{day.note}</p>
-      ) : null}
-      <AnimatePresence initial={false}>
-        {expanded ? (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-4">
-              {day.items.length === 0 ? (
-                <p className="text-muted-foreground ml-6 text-sm">
-                  No activities in this template day.
-                </p>
-              ) : (
-                day.items.map((item) => (
-                  <TemplateItemRead key={item.id} item={item} />
-                ))
-              )}
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function extractMessage(payload: unknown, fallback: string): string {
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "message" in payload &&
-    typeof (payload as { message: unknown }).message === "string"
-  ) {
-    return (payload as { message: string }).message;
-  }
-  return fallback;
-}
 
 export default function TemplateDetail() {
   const { tripId } = useParams<{ tripId: string }>();
@@ -354,8 +217,8 @@ export default function TemplateDetail() {
           {trip.days.length > 0 ? (
             <p className="text-muted-foreground mb-4 text-sm">
               This template has <strong>{trip.days.length}</strong> day
-              {trip.days.length === 1 ? "" : "s"}. When you clone, your new
-              start and end dates must span exactly that many days.
+              {trip.days.length === 1 ? "" : "s"}. When you clone, your new start
+              and end dates must span exactly that many days.
             </p>
           ) : null}
           <div className="space-y-4">

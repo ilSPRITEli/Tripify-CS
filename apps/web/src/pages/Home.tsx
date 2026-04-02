@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { signInWithGoogle } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
-import { MapPin, Plane, PlaneIcon } from "lucide-react";
+import { MapPin, PlaneIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
