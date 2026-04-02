@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import {
@@ -128,17 +128,19 @@ export default function TripList() {
     }
 
     const res = await api.trips.get({ query });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
 
     if (
       res.error ||
       !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
       payload.ok !== true ||
       !("data" in payload) ||
       !Array.isArray(payload.data)
     ) {
       setTrips([]);
-      toast.error("Could not load trips");
+      toast.error(apiMessage(payload, "Could not load trips"));
     } else {
       setTrips(payload.data);
     }

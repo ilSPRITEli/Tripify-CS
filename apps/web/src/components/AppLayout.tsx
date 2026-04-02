@@ -1,6 +1,6 @@
 import logo from "@/assets/icons.svg";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import { api, treatyResponseBody } from "@/lib/api";
 import { signOut } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -56,17 +56,19 @@ export default function AppLayout() {
       }
       setSessionEmail(data.session.user.email ?? null);
       const res = await api.auth.me.get();
-      const payload = res.data;
+      const payload = treatyResponseBody(res);
       if (
         res.error ||
         !payload ||
+        typeof payload !== "object" ||
+        !("ok" in payload) ||
         payload.ok !== true ||
         !("data" in payload) ||
         !payload.data
       ) {
         setProfile(null);
       } else {
-        setProfile(payload.data);
+        setProfile(payload.data as AuthMeDto);
       }
       setLayoutReady(true);
     };

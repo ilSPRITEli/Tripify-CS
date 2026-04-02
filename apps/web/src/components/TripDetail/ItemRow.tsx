@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { itineraryApi } from "@/lib/api";
+import { apiMessage, itineraryApi, treatyResponseBody } from "@/lib/api";
 import type { ItineraryItemDto } from "@repo/shared";
 import {
   Check,
@@ -36,7 +36,6 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   datetimeLocalToIso,
-  extractApiErrorMessage,
   formatTime,
   isoToDatetimeLocal,
 } from "./utils";
@@ -123,7 +122,7 @@ export function ItemRow({
     const res = await itineraryApi["itinerary-items"]({ itemId: item.id }).patch(
       body,
     );
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -131,7 +130,7 @@ export function ItemRow({
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not update item"));
+      toast.error(apiMessage(payload, "Could not update item"));
       setSaving(false);
       return;
     }
@@ -144,7 +143,7 @@ export function ItemRow({
   const confirmDelete = async () => {
     setSaving(true);
     const res = await itineraryApi["itinerary-items"]({ itemId: item.id }).delete();
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -152,7 +151,7 @@ export function ItemRow({
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not delete"));
+      toast.error(apiMessage(payload, "Could not delete"));
       setSaving(false);
       return;
     }

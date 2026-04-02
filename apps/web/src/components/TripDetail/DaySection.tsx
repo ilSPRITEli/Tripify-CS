@@ -10,14 +10,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { itineraryApi } from "@/lib/api";
+import { apiMessage, itineraryApi, treatyResponseBody } from "@/lib/api";
 import type { TripDayDto } from "@repo/shared";
 import { ChevronDown, ChevronUp, Pencil, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { ItemRow } from "./ItemRow";
-import { datetimeLocalToIso, extractApiErrorMessage } from "./utils";
+import { datetimeLocalToIso } from "./utils";
 
 export function DaySection({
   day,
@@ -83,7 +83,7 @@ export function DaySection({
       title: dayTitle.trim() || null,
       note: dayNote.trim() || null,
     });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -91,7 +91,7 @@ export function DaySection({
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not update day"));
+      toast.error(apiMessage(payload, "Could not update day"));
       setSavingDay(false);
       return;
     }
@@ -132,7 +132,7 @@ export function DaySection({
     const res = await itineraryApi["trip-days"]({ tripDayId: day.id }).items.post(
       body,
     );
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -140,7 +140,7 @@ export function DaySection({
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not add activity"));
+      toast.error(apiMessage(payload, "Could not add activity"));
       setSavingItem(false);
       return;
     }

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import {
   ArrowLeft,
@@ -102,24 +102,22 @@ export default function CreateTrip() {
     const res = await api.trips.post(body);
     setSubmitting(false);
 
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
       payload.ok !== true ||
       !("data" in payload) ||
       !payload.data
     ) {
-      const msg =
-        payload && "message" in payload && typeof payload.message === "string"
-          ? payload.message
-          : "Could not create trip";
-      toast.error(msg);
+      toast.error(apiMessage(payload, "Could not create trip"));
       return;
     }
 
     toast.success("Trip created");
-    navigate(`/trips/${payload.data.id}`, { replace: true });
+    navigate(`/trips/${(payload.data as { id: string }).id}`, { replace: true });
   };
 
   if (!ready) {

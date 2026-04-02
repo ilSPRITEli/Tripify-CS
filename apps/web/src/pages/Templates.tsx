@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import type { TemplateListItemDto } from "@repo/shared";
 import { CalendarRange, LayoutTemplate, MapPin, Search, Users } from "lucide-react";
 import { motion } from "motion/react";
@@ -34,7 +34,7 @@ export default function Templates() {
           : {}),
       },
     });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -45,7 +45,7 @@ export default function Templates() {
       !Array.isArray(payload.data)
     ) {
       setItems([]);
-      toast.error("Could not load templates");
+      toast.error(apiMessage(payload, "Could not load templates"));
     } else {
       setItems(payload.data as TemplateListItemDto[]);
     }

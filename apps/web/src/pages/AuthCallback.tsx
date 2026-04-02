@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { api } from "@/lib/api";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { Plane } from "lucide-react";
 import { motion } from "motion/react";
@@ -26,19 +26,19 @@ export default function AuthCallback() {
       }
 
       const res = await api.auth.me.get();
-      const payload = res.data;
+      const payload = treatyResponseBody(res);
 
       if (
         res.error ||
         !payload ||
+        typeof payload !== "object" ||
+        !("ok" in payload) ||
         payload.ok !== true ||
         !("data" in payload)
       ) {
-        const fromBody =
-          payload && "message" in payload && typeof payload.message === "string"
-            ? payload.message
-            : null;
-        setMessage(fromBody ?? "Could not verify your account with the API");
+        setMessage(
+          apiMessage(payload, "Could not verify your account with the API"),
+        );
         return;
       }
 

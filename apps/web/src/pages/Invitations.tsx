@@ -8,11 +8,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InvitationCard } from "@/components/Invitations/InvitationCard";
-import {
-  extractMessage,
-  invitationStatusLabel,
-} from "@/components/Invitations/utils";
-import { api } from "@/lib/api";
+import { invitationStatusLabel } from "@/components/Invitations/utils";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { InvitationListItemDto, InvitationStatus } from "@repo/shared";
@@ -46,7 +43,7 @@ export default function Invitations() {
     }
 
     const res = await api.invitations.get({ query });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
 
     if (
       res.error ||
@@ -58,7 +55,7 @@ export default function Invitations() {
       !Array.isArray(payload.data)
     ) {
       setItems([]);
-      toast.error(extractMessage(payload, "Could not load invitations"));
+      toast.error(apiMessage(payload, "Could not load invitations"));
     } else {
       setItems(payload.data as InvitationListItemDto[]);
     }
@@ -73,7 +70,7 @@ export default function Invitations() {
   const accept = async (id: string) => {
     setActionId(id);
     const res = await api.invitations({ invitationId: id }).accept.post();
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -81,7 +78,7 @@ export default function Invitations() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractMessage(payload, "Could not accept"));
+      toast.error(apiMessage(payload, "Could not accept"));
     } else {
       toast.success("You joined the trip");
     }
@@ -92,7 +89,7 @@ export default function Invitations() {
   const decline = async (id: string) => {
     setActionId(id);
     const res = await api.invitations({ invitationId: id }).decline.post();
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -100,7 +97,7 @@ export default function Invitations() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractMessage(payload, "Could not decline"));
+      toast.error(apiMessage(payload, "Could not decline"));
     } else {
       toast.success("Invitation declined");
     }

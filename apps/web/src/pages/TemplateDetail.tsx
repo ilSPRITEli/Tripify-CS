@@ -11,8 +11,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TemplateDayRead } from "@/components/TemplateDetail/TemplateDayRead";
-import { extractMessage, formatYmd } from "@/components/TemplateDetail/utils";
-import { api, treatyResponseBody } from "@/lib/api";
+import { formatYmd } from "@/components/TemplateDetail/utils";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import type { TripDetailDto } from "@repo/shared";
 import {
   ArrowLeft,
@@ -52,7 +52,7 @@ export default function TemplateDetail() {
       !payload.data
     ) {
       setTrip(null);
-      toast.error(extractMessage(payload, "Template not found"));
+      toast.error(apiMessage(payload, "Template not found"));
     } else {
       const d = payload.data as TripDetailDto;
       setTrip(d);
@@ -99,7 +99,7 @@ export default function TemplateDetail() {
       typeof payload.data !== "object" ||
       !("id" in payload.data)
     ) {
-      toast.error(extractMessage(payload, "Could not clone"));
+      toast.error(apiMessage(payload, "Could not clone"));
       setCloneSaving(false);
       return;
     }

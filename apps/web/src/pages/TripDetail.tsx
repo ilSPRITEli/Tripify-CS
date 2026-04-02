@@ -4,11 +4,8 @@ import { DaySection } from "@/components/TripDetail/DaySection";
 import { TripDetailHero } from "@/components/TripDetail/TripDetailHero";
 import { TripDetailRatingsSection } from "@/components/TripDetail/TripDetailRatingsSection";
 import { TripDetailSidebar } from "@/components/TripDetail/TripDetailSidebar";
-import {
-  extractApiErrorMessage,
-  statusStyle,
-} from "@/components/TripDetail/utils";
-import { api } from "@/lib/api";
+import { statusStyle } from "@/components/TripDetail/utils";
+import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import type { RatingDto, TripDetailDto } from "@repo/shared";
 import { ArrowLeft } from "lucide-react";
@@ -47,31 +44,25 @@ export default function TripDetail() {
     }
 
     const res = await api.trips({ tripId }).get();
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
 
     if (
       res.error ||
       !payload ||
+      typeof payload !== "object" ||
+      !("ok" in payload) ||
       payload.ok !== true ||
       !("data" in payload) ||
       !payload.data
     ) {
       setTrip(null);
-      if (payload && "message" in payload) {
-        toast.error(
-          typeof payload.message === "string"
-            ? payload.message
-            : "Trip not found",
-        );
-      } else {
-        toast.error("Trip not found");
-      }
+      toast.error(apiMessage(payload, "Trip not found"));
       setRatings([]);
     } else {
-      setTrip(payload.data);
+      setTrip(payload.data as TripDetailDto);
 
       const rr = await api.trips({ tripId }).ratings.get();
-      const rp = rr.data;
+      const rp = treatyResponseBody(rr);
       if (
         !rr.error &&
         rp &&
@@ -88,7 +79,7 @@ export default function TripDetail() {
     }
 
     const meRes = await api.auth.me.get();
-    const mePayload = meRes.data;
+    const mePayload = treatyResponseBody(meRes);
     if (
       !meRes.error &&
       mePayload &&
@@ -163,7 +154,7 @@ export default function TripDetail() {
     if (!tripId) return;
     setEndSaving(true);
     const res = await api.trips({ tripId }).end.post({ status: endChoice });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -171,7 +162,7 @@ export default function TripDetail() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not end trip"));
+      toast.error(apiMessage(payload, "Could not end trip"));
       setEndSaving(false);
       return;
     }
@@ -193,7 +184,7 @@ export default function TripDetail() {
       score: ratingScore,
       comment: ratingComment.trim() ? ratingComment.trim() : null,
     });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -201,7 +192,7 @@ export default function TripDetail() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not submit rating"));
+      toast.error(apiMessage(payload, "Could not submit rating"));
       setRatingSaving(false);
       return;
     }
@@ -216,7 +207,7 @@ export default function TripDetail() {
     if (!tripId) return;
     setPublishSaving(true);
     const res = await api.trips({ tripId })["publish-template"].post({});
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -224,7 +215,7 @@ export default function TripDetail() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not publish template"));
+      toast.error(apiMessage(payload, "Could not publish template"));
       setPublishSaving(false);
       return;
     }
@@ -245,7 +236,7 @@ export default function TripDetail() {
       inviteeEmail: email,
       message: inviteMessage.trim() ? inviteMessage.trim() : null,
     });
-    const payload = res.data;
+    const payload = treatyResponseBody(res);
     if (
       res.error ||
       !payload ||
@@ -253,7 +244,7 @@ export default function TripDetail() {
       !("ok" in payload) ||
       payload.ok !== true
     ) {
-      toast.error(extractApiErrorMessage(payload, "Could not send invitation"));
+      toast.error(apiMessage(payload, "Could not send invitation"));
       setInviteSaving(false);
       return;
     }

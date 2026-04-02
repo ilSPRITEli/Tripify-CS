@@ -13,15 +13,3 @@ export function formatYmd(value: string | Date) {
   }
   return d.toISOString().slice(0, 10);
 }
-
-export function extractMessage(payload: unknown, fallback: string): string {
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "message" in payload &&
-    typeof (payload as { message: unknown }).message === "string"
-  ) {
-    return (payload as { message: string }).message;
-  }
-  return fallback;
-}

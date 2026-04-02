@@ -25,6 +25,22 @@ export function treatyResponseBody(res: {
   return null;
 }
 
+/**
+ * Reads `message` from a parsed API JSON body (e.g. `{ ok: false, message: "…" }`).
+ * Always combine with `treatyResponseBody(res)` for Eden Treaty calls.
+ */
+export function apiMessage(body: unknown, fallback: string): string {
+  if (
+    body &&
+    typeof body === "object" &&
+    "message" in body &&
+    typeof (body as { message: unknown }).message === "string"
+  ) {
+    return (body as { message: string }).message;
+  }
+  return fallback;
+}
+
 export const api = treaty<App>(apiUrl, {
   async onRequest(_path, options) {
     const { data } = await supabase.auth.getSession();
