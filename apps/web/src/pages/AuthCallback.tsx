@@ -1,8 +1,8 @@
+import Logo from "@/assets/icons.svg";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, apiMessage, treatyResponseBody } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
-import { Plane } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -60,9 +60,11 @@ export default function AuthCallback() {
       >
         <Card className="rounded-2xl border-border/60 shadow-elevated">
           <CardContent className="flex flex-col items-center gap-6 px-8 py-10 text-center">
-            <div className="gradient-primary flex h-14 w-14 items-center justify-center rounded-xl shadow-sm">
-              <Plane className="text-primary-foreground h-7 w-7" />
-            </div>
+            <img
+                  src={Logo}
+                  alt="Tripify"
+                  className="h-20 w-20 md:h-24 md:w-24"
+              />
             <p className="text-muted-foreground text-sm leading-relaxed">
               {message}
             </p>
